@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SnapText</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="card">
+        <p class="eyebrow">macOS OCR utility</p>
+        <h1>SnapText</h1>
+        <p class="lead">
+          Capture any region of the screen, scan it for text, and replace the clipboard with the recognized text.
+        </p>
+
+        <button id="capture-button" class="primary-button">Capture text</button>
+        <p id="shortcut-hint" class="shortcut-hint"></p>
+
+        <div class="steps">
+          <div class="step"><span>1</span><p>Click the button or use the shortcut.</p></div>
+          <div class="step"><span>2</span><p>Drag over the text you want to scan.</p></div>
+          <div class="step"><span>3</span><p>The image is deleted and the text goes to your clipboard.</p></div>
+        </div>
+
+        <div id="status" class="status status-idle">Ready.</div>
+
+        <label class="preview-label" for="preview">Last recognized text</label>
+        <textarea id="preview" readonly placeholder="Your scanned text will appear here."></textarea>
+      </section>
+    </main>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>

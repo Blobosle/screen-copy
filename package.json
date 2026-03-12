@@ -1,0 +1,48 @@
+{
+  "name": "snaptext-macos",
+  "version": "1.0.0",
+  "description": "Capture a screen region on macOS, run OCR, and copy only the recognized text to the clipboard.",
+  "main": "dist/main/main.js",
+  "author": "OpenAI",
+  "license": "MIT",
+  "scripts": {
+    "clean": "node ./scripts/clean.mjs",
+    "build:ts": "tsc -p tsconfig.json",
+    "build:static": "node ./scripts/copy-static.mjs",
+    "build:swift": "node ./scripts/build-swift-helper.mjs",
+    "build": "npm run clean && npm run build:ts && npm run build:static && npm run build:swift",
+    "dev": "npm run build && electron . 2>&1 | tee snaptext-dev.log",
+    "dist": "npm run build && electron-builder --mac dmg zip"
+  },
+  "build": {
+    "appId": "com.openai.snaptext",
+    "productName": "SnapText",
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "extraResources": [
+      {
+        "from": "build/native/ocr-helper",
+        "to": "ocr-helper"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "zip",
+        "dmg"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@types/node": "25.4.0",
+    "electron": "41.0.1",
+    "electron-builder": "26.8.1",
+    "typescript": "5.9.3"
+  }
+}
