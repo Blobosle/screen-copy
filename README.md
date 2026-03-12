@@ -1,6 +1,6 @@
-# SnapText
+# Screenshot Copy for macOS
 
-SnapText is a minimal macOS desktop app that lets you draw a screenshot region, runs OCR on the captured image, deletes the image immediately, and copies only the recognized text to the clipboard.
+ScreenshotCopy is a minimal macOS desktop app that lets you draw a screenshot region, runs OCR on the captured image, deletes the image immediately, and copies only the recognized text to the clipboard.
 
 ## Stack
 
@@ -16,28 +16,6 @@ SnapText is a minimal macOS desktop app that lets you draw a screenshot region, 
 4. Deletes the temporary image.
 5. Copies the recognized text to the clipboard.
 
-## Project structure
-
-```text
-src/
-  main/
-    main.ts          Electron main process
-    ocr.ts           Invokes the Swift OCR helper
-    screenshot.ts    Invokes macOS screencapture
-  renderer/
-    index.html       Minimal UI
-    renderer.ts      UI behavior
-    styles.css       Minimal styling
-  shared/
-    types.ts         Shared IPC result types
-native/
-  ocr.swift          Vision-based OCR helper
-scripts/
-  build-swift-helper.mjs
-  clean.mjs
-  copy-static.mjs
-```
-
 ## Requirements
 
 - macOS
@@ -50,28 +28,10 @@ Install Command Line Tools if needed:
 xcode-select --install
 ```
 
-## Install
+For building the application:
 
 ```bash
 npm install
-```
-
-## Run in development
-
-```bash
-npm run dev
-```
-
-## Build the app
-
-```bash
-npm run dist
-```
-
-Artifacts are written to:
-
-```text
-release/
 ```
 
 ## Screen Recording permission
@@ -83,14 +43,3 @@ System Settings → Privacy & Security → Screen & System Audio Recording
 ```
 
 Then reopen the app.
-
-## Notes
-
-- The screenshot is not kept as app output.
-- A temporary PNG is created only long enough for OCR, then removed.
-- The recognized text is written to the clipboard.
-- The default global shortcut is `CommandOrControl+Shift+Y`.
-
-## Packaging and signing
-
-`electron-builder` is configured for a basic macOS ZIP and DMG build. For distribution outside your own machine, add your Apple Developer signing and notarization settings before shipping.
