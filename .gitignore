@@ -5,3 +5,5 @@ release/
 snaptext-dev.log
 *.log
 .DS_Store
+DOCUMENTATION.md
+
