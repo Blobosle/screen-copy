@@ -1,4 +1,4 @@
-# Screenshot Copy for macOS
+# ScreenshotCopy for macOS
 
 ScreenshotCopy is a minimal macOS desktop app that lets you draw a screenshot region, runs OCR on the captured image, deletes the image immediately, and copies only the recognized text to the clipboard.
 
