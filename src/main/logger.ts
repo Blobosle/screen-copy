@@ -2,6 +2,8 @@ import { app } from 'electron';
 import { appendFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 
+const LOGGING_ENABLED = false;
+
 function getLogPath(): string {
   const logsDir = path.join(app.getPath('userData'), 'logs');
   mkdirSync(logsDir, { recursive: true });
@@ -17,6 +19,10 @@ function safeStringify(value: unknown): string {
 }
 
 export function log(scope: string, message: string, details?: unknown): void {
+  if (!LOGGING_ENABLED) {
+    return;
+  }
+
   const timestamp = new Date().toISOString();
   const suffix = details === undefined ? '' : ` ${safeStringify(details)}`;
   const line = `[${timestamp}] [${scope}] ${message}${suffix}`;

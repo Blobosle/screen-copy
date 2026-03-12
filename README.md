@@ -28,10 +28,11 @@ Install Command Line Tools if needed:
 xcode-select --install
 ```
 
-For building the application:
+For building the application for development:
 
 ```bash
 npm install
+npm run dev
 ```
 
 ## Screen Recording permission

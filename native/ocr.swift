@@ -54,7 +54,7 @@ func recognizeText(from image: CGImage) throws -> String {
     let handler = VNImageRequestHandler(cgImage: image, options: [:])
     try handler.perform([request])
 
-    let observations = (request.results as? [VNRecognizedTextObservation]) ?? []
+    let observations = request.results ?? []
 
     let tokens = observations.compactMap { observation -> OCRToken? in
         guard let candidate = observation.topCandidates(1).first else {

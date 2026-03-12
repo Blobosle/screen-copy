@@ -16,14 +16,7 @@ const shortcutHint = document.getElementById('shortcut-hint') as HTMLParagraphEl
 const statusNode = document.getElementById('status') as HTMLDivElement;
 const previewNode = document.getElementById('preview') as HTMLTextAreaElement;
 
-function debug(message: string, details?: unknown): void {
-  if (details === undefined) {
-    console.log(`[renderer] ${message}`);
-    return;
-  }
-
-  console.log(`[renderer] ${message}`, details);
-}
+function debug(_message: string, _details?: unknown): void {}
 
 function setStatus(kind: 'idle' | 'working' | 'success' | 'error', message: string): void {
   debug('setStatus', { kind, message });

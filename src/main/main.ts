@@ -44,10 +44,6 @@ function createWindow(): BrowserWindow {
     log('main', 'renderer finished loading');
   });
 
-  window.webContents.on('console-message', (_event, level, message, line, sourceId) => {
-    log('renderer-console', message, { level, line, sourceId });
-  });
-
   window.on('show', () => log('main', 'window shown'));
   window.on('hide', () => log('main', 'window hidden'));
   window.on('focus', () => log('main', 'window focused'));

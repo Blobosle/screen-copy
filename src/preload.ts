@@ -1,13 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { CaptureResult } from './shared/types.js';
-function debug(message: string, details?: unknown): void {
-  if (details === undefined) {
-    console.log(`[preload] ${message}`);
-    return;
-  }
 
-  console.log(`[preload] ${message}`, details);
-}
+function debug(_message: string, _details?: unknown): void {}
 
 contextBridge.exposeInMainWorld('snapText', {
   captureText: async (): Promise<CaptureResult> => {
