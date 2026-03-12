@@ -4,7 +4,7 @@ ScreenshotCopy is a minimal macOS desktop app that lets you draw a screenshot re
 
 ## Stack
 
-- Electron + TypeScript for the desktop app shell
+- Electron + TypeScript + React for the desktop app shell
 - Native macOS `screencapture` for the interactive region selection
 - A tiny Swift helper using Apple's Vision framework for OCR
 
