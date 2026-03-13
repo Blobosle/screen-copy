@@ -14,6 +14,7 @@ import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError 
 import { recognizeTextFromImage } from './ocr.js';
 import type { AppSettings, CaptureResult, ShortcutUpdateResult } from '../shared/types.js';
 
+let isQuitting = false;
 const DEFAULT_SHORTCUT = 'CommandOrControl+Shift+Y';
 const DEFAULT_SETTINGS: AppSettings = {
     screenshotShortcut: DEFAULT_SHORTCUT
@@ -94,6 +95,17 @@ function createWindow(): BrowserWindow {
     window.on('blur', () => log('main', 'window blurred'));
     window.on('closed', () => {
         log('main', 'window closed');
+        mainWindow = null;
+    });
+
+    window.on('close', (event) => {
+        if (!isQuitting) {
+            event.preventDefault();
+            window.hide();
+        }
+    });
+
+    window.on('closed', () => {
         mainWindow = null;
     });
 
@@ -325,6 +337,10 @@ log('main', 'single instance lock result', { gotLock });
 if (!gotLock) {
     app.quit();
 }
+
+app.on('before-quit', () => {
+    isQuitting = true;
+});
 
 app.on('second-instance', () => {
     log('main', 'second instance detected');
