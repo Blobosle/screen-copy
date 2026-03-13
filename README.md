@@ -2,11 +2,11 @@
 
 # ScreenCopy
 
-</div>
-
 ScreenCopy allows you to copy text and QR codes through taking screenshots on macOS. The application will run OCR on the captured images, delete them, and copy the recognized text/QR code to the clipboard.
 
-## Screen Recording permission
+</div>
+
+## Screen Recording Permissions
 
 The first time you use screen capture, macOS may ask for Screen Recording access. If access is denied, enable it in:
 
