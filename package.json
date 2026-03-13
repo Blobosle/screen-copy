@@ -1,10 +1,10 @@
 {
   "name": "snaptext-macos",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Capture a screen region on macOS, run OCR, and copy only the recognized text to the clipboard.",
   "main": "dist/main/main.js",
-  "author": "OpenAI",
-  "license": "MIT",
+  "author": "Blobosle",
+  "license": "GPL-3.0-only",
   "scripts": {
     "clean": "node ./scripts/clean.mjs",
     "build:ts": "tsc -p tsconfig.json",
@@ -16,7 +16,7 @@
     "dist": "npm run build && electron-builder --mac dmg zip"
   },
   "build": {
-    "appId": "com.openai.snaptext",
+    "appId": "com.blobosle.screencopy",
     "productName": "ScreenCopy",
     "files": [
       "dist/**/*",
