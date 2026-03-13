@@ -7,6 +7,9 @@ import {
     dialog,
     globalShortcut,
     ipcMain,
+    Menu,
+    Tray,
+    nativeImage,
     systemPreferences
 } from 'electron';
 import { getLogFilePath, log, logError } from './logger.js';
@@ -14,16 +17,21 @@ import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError 
 import { recognizeTextFromImage } from './ocr.js';
 import type { AppSettings, CaptureResult, ShortcutUpdateResult } from '../shared/types.js';
 
-let isQuitting = false;
 const DEFAULT_SHORTCUT = 'CommandOrControl+Shift+Y';
 const DEFAULT_SETTINGS: AppSettings = {
     screenshotShortcut: DEFAULT_SHORTCUT
 };
 
 let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
 let registeredShortcut: string | null = null;
 let captureInFlight: Promise<CaptureResult> | null = null;
 let appSettings: AppSettings = { ...DEFAULT_SETTINGS };
+let isQuitting = false;
+
+if (process.platform === 'darwin') {
+    app.setActivationPolicy('accessory');
+}
 
 function getSettingsPath(): string {
     return path.join(app.getPath('userData'), 'settings.json');
@@ -60,6 +68,56 @@ async function persistSettings(): Promise<void> {
     }
 }
 
+function createTrayImage() {
+    const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+            <rect x="5.5" y="3.5" width="8" height="9" rx="1.5" fill="none" stroke="black" stroke-width="1.5"/>
+            <rect x="3.5" y="5.5" width="8" height="9" rx="1.5" fill="none" stroke="black" stroke-width="1.5"/>
+        </svg>
+    `.trim();
+
+    const image = nativeImage.createFromDataURL(
+        `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+    );
+
+    image.setTemplateImage(true);
+    return image.resize({ width: 18, height: 18 });
+}
+
+function ensureTray(): Tray {
+    if (tray) {
+        return tray;
+    }
+
+    tray = new Tray(createTrayImage());
+    tray.setToolTip('ScreenCopy');
+
+    const contextMenu = Menu.buildFromTemplate([
+        {
+            label: 'Open Settings',
+            click: () => {
+                void showSettingsWindow();
+            }
+        },
+        { type: 'separator' },
+        {
+            label: 'Quit ScreenCopy',
+            click: () => {
+                isQuitting = true;
+                app.quit();
+            }
+        }
+    ]);
+
+    tray.setContextMenu(contextMenu);
+
+    tray.on('click', () => {
+        void showSettingsWindow();
+    });
+
+    return tray;
+}
+
 function createWindow(): BrowserWindow {
     log('main', 'creating browser window');
 
@@ -71,6 +129,7 @@ function createWindow(): BrowserWindow {
         resizable: false,
         maximizable: false,
         fullscreenable: false,
+        show: false,
         title: 'ScreenCopy',
         backgroundColor: '#ececec',
         webPreferences: {
@@ -85,8 +144,13 @@ function createWindow(): BrowserWindow {
     log('main', 'loading renderer file', { rendererPath });
     void window.loadFile(rendererPath);
 
-    window.webContents.on('did-finish-load', () => {
-        log('main', 'renderer finished loading');
+    window.on('close', (event) => {
+        if (isQuitting) {
+            return;
+        }
+
+        event.preventDefault();
+        void hideSettingsWindow();
     });
 
     window.on('show', () => log('main', 'window shown'));
@@ -98,35 +162,43 @@ function createWindow(): BrowserWindow {
         mainWindow = null;
     });
 
-    window.on('close', (event) => {
-        if (!isQuitting) {
-            event.preventDefault();
-            window.hide();
-        }
-    });
-
-    window.on('closed', () => {
-        mainWindow = null;
-    });
-
     return window;
 }
 
-function showMainWindow(): void {
+function ensureWindow(): BrowserWindow {
     if (!mainWindow || mainWindow.isDestroyed()) {
         mainWindow = createWindow();
-        return;
     }
 
-    if (mainWindow.isMinimized()) {
-        mainWindow.restore();
+    return mainWindow;
+}
+
+async function showSettingsWindow(): Promise<void> {
+    const window = ensureWindow();
+
+    if (process.platform === 'darwin') {
+        app.setActivationPolicy('regular');
+        await app.dock?.show();
     }
 
-    if (!mainWindow.isVisible()) {
-        mainWindow.show();
+    if (window.isMinimized()) {
+        window.restore();
     }
 
-    mainWindow.focus();
+    window.show();
+    app.focus();
+    window.focus();
+}
+
+async function hideSettingsWindow(): Promise<void> {
+    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
+        mainWindow.hide();
+    }
+
+    if (process.platform === 'darwin') {
+        app.dock?.hide();
+        app.setActivationPolicy('accessory');
+    }
 }
 
 function broadcastCaptureResult(result: CaptureResult): void {
@@ -158,6 +230,7 @@ async function runCaptureFlow(): Promise<CaptureResult> {
 
     captureInFlight = (async () => {
         const accessStatus = getScreenAccessStatus();
+
         if (accessStatus === 'denied' || accessStatus === 'restricted') {
             log('main', 'capture blocked by screen access status', { accessStatus });
             return {
@@ -338,13 +411,9 @@ if (!gotLock) {
     app.quit();
 }
 
-app.on('before-quit', () => {
-    isQuitting = true;
-});
-
 app.on('second-instance', () => {
     log('main', 'second instance detected');
-    showMainWindow();
+    void showSettingsWindow();
 });
 
 app.whenReady().then(async () => {
@@ -358,13 +427,21 @@ app.whenReady().then(async () => {
     });
 
     appSettings = await loadSettings();
-    mainWindow = createWindow();
+    ensureTray();
     registerInitialShortcut();
+
+    if (process.platform === 'darwin') {
+        app.dock?.hide();
+    }
 
     app.on('activate', () => {
         log('main', 'app activate event');
-        showMainWindow();
+        void showSettingsWindow();
     });
+});
+
+app.on('before-quit', () => {
+    isQuitting = true;
 });
 
 app.on('window-all-closed', () => {
