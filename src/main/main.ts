@@ -261,7 +261,7 @@ async function runCaptureFlow(): Promise<CaptureResult> {
                 log('main', 'OCR completed but returned empty text');
                 return {
                     status: 'error',
-                    message: 'No text was detected in the selected area.'
+                    message: 'No text or QR code was detected in the selected area.'
                 } satisfies CaptureResult;
             }
 
