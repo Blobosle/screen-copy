@@ -6,6 +6,16 @@
 
 ScreenCopy allows you to copy text through taking screenshots on macOS. The application will run OCR on the captured images, delete them, and copy the recognized text to the clipboard.
 
+## Screen Recording permission
+
+The first time you use screen capture, macOS may ask for Screen Recording access. If access is denied, enable it in:
+
+```text
+System Settings → Privacy & Security → Screen & System Audio Recording
+```
+
+Then reopen the app.
+
 ## Stack
 
 - Electron + TypeScript + React for the desktop app shell
@@ -30,13 +40,3 @@ For building the application for development:
 npm install
 npm run dev
 ```
-
-## Screen Recording permission
-
-The first time you use screen capture, macOS may ask for Screen Recording access. If access is denied, enable it in:
-
-```text
-System Settings → Privacy & Security → Screen & System Audio Recording
-```
-
-Then reopen the app.
