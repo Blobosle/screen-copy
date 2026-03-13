@@ -4,7 +4,7 @@
 
 </div>
 
-ScreenCopy allows you to copy text through taking screenshots on macOS. The application will run OCR on the captured images, delete them, and copy the recognized text to the clipboard.
+ScreenCopy allows you to copy text and QR codes through taking screenshots on macOS. The application will run OCR on the captured images, delete them, and copy the recognized text/QR code to the clipboard.
 
 ## Screen Recording permission
 
