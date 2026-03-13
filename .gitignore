@@ -4,6 +4,8 @@ build/
 release/
 snaptext-dev.log
 *.log
-.DS_Store
-DOCUMENTATION.md
 
+.DS_Store
+
+DOCUMENTATION.md
+zip.sh
