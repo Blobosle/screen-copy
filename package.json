@@ -1,5 +1,5 @@
 {
-  "name": "snaptext-macos",
+  "name": "ScreenCopy",
   "version": "0.1.0",
   "description": "Capture a screen region on macOS, run OCR, and copy only the recognized text to the clipboard.",
   "main": "dist/main/main.js",
