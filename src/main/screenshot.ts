@@ -16,7 +16,7 @@ export class ScreenshotCancelledError extends Error {
 }
 
 export async function captureInteractiveScreenshot(): Promise<string> {
-    const filePath = path.join(os.tmpdir(), `snaptext-${randomUUID()}.png`);
+    const filePath = path.join(os.tmpdir(), `screencopy-${randomUUID()}.png`);
     log('screenshot', 'starting interactive screencapture', { filePath });
 
     try {

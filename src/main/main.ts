@@ -1,3 +1,4 @@
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import {
     app,
@@ -11,23 +12,66 @@ import {
 import { getLogFilePath, log, logError } from './logger.js';
 import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from './screenshot.js';
 import { recognizeTextFromImage } from './ocr.js';
-import type { CaptureResult } from '../shared/types.js';
+import type { AppSettings, CaptureResult, ShortcutUpdateResult } from '../shared/types.js';
 
 const DEFAULT_SHORTCUT = 'CommandOrControl+Shift+Y';
+const DEFAULT_SETTINGS: AppSettings = {
+    screenshotShortcut: DEFAULT_SHORTCUT
+};
 
 let mainWindow: BrowserWindow | null = null;
 let registeredShortcut: string | null = null;
 let captureInFlight: Promise<CaptureResult> | null = null;
+let appSettings: AppSettings = { ...DEFAULT_SETTINGS };
+
+function getSettingsPath(): string {
+    return path.join(app.getPath('userData'), 'settings.json');
+}
+
+async function loadSettings(): Promise<AppSettings> {
+    try {
+        const raw = await fs.readFile(getSettingsPath(), 'utf8');
+        const parsed = JSON.parse(raw) as Partial<AppSettings>;
+
+        return {
+            screenshotShortcut:
+                typeof parsed.screenshotShortcut === 'string' && parsed.screenshotShortcut.trim().length > 0
+                    ? parsed.screenshotShortcut.trim()
+                    : DEFAULT_SETTINGS.screenshotShortcut
+        };
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+            logError('main', 'failed to load settings file', error);
+        }
+
+        return { ...DEFAULT_SETTINGS };
+    }
+}
+
+async function persistSettings(): Promise<void> {
+    try {
+        const settingsPath = getSettingsPath();
+        await fs.mkdir(path.dirname(settingsPath), { recursive: true });
+        await fs.writeFile(settingsPath, JSON.stringify(appSettings, null, 2), 'utf8');
+        log('main', 'settings persisted', { settingsPath, appSettings });
+    } catch (error) {
+        logError('main', 'failed to persist settings', error);
+    }
+}
 
 function createWindow(): BrowserWindow {
     log('main', 'creating browser window');
 
     const window = new BrowserWindow({
-        width: 440,
-        height: 520,
+        width: 760,
+        height: 460,
+        minWidth: 760,
+        minHeight: 460,
         resizable: false,
-        title: 'SnapText',
-        titleBarStyle: 'hiddenInset',
+        maximizable: false,
+        fullscreenable: false,
+        title: 'ScreenCopy',
+        backgroundColor: '#ececec',
         webPreferences: {
             preload: path.join(__dirname, '../preload.js'),
             contextIsolation: true,
@@ -56,8 +100,26 @@ function createWindow(): BrowserWindow {
     return window;
 }
 
+function showMainWindow(): void {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+        mainWindow = createWindow();
+        return;
+    }
+
+    if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+    }
+
+    if (!mainWindow.isVisible()) {
+        mainWindow.show();
+    }
+
+    mainWindow.focus();
+}
+
 function broadcastCaptureResult(result: CaptureResult): void {
     log('main', 'broadcasting capture result', result);
+
     if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('capture-result', result);
     }
@@ -89,15 +151,14 @@ async function runCaptureFlow(): Promise<CaptureResult> {
             return {
                 status: 'error',
                 message:
-                    'Screen Recording access is blocked for SnapText. Open System Settings → Privacy & Security → Screen & System Audio Recording, allow the app, then reopen it.'
+                    'Screen Recording access is blocked for ScreenCopy. Open System Settings → Privacy & Security → Screen & System Audio Recording, allow the app, then reopen it.'
             } satisfies CaptureResult;
         }
 
         let screenshotPath: string | null = null;
-        const wasVisible = mainWindow ? mainWindow.isVisible() : false;
 
         try {
-            if (mainWindow && !mainWindow.isDestroyed()) {
+            if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
                 log('main', 'hiding main window before interactive screenshot');
                 mainWindow.hide();
             }
@@ -121,6 +182,7 @@ async function runCaptureFlow(): Promise<CaptureResult> {
 
             clipboard.writeText(text);
             log('main', 'clipboard updated', { textLength: text.length });
+
             return {
                 status: 'success',
                 text
@@ -133,6 +195,7 @@ async function runCaptureFlow(): Promise<CaptureResult> {
 
             logError('main', 'capture flow failed', error);
             const message = error instanceof Error ? error.message : 'Unexpected OCR error.';
+
             return {
                 status: 'error',
                 message
@@ -140,12 +203,6 @@ async function runCaptureFlow(): Promise<CaptureResult> {
         } finally {
             if (screenshotPath) {
                 await deleteIfExists(screenshotPath);
-            }
-
-            if (mainWindow && !mainWindow.isDestroyed() && wasVisible) {
-                log('main', 'restoring main window after capture');
-                mainWindow.show();
-                mainWindow.focus();
             }
         }
     })();
@@ -157,46 +214,126 @@ async function runCaptureFlow(): Promise<CaptureResult> {
     return result;
 }
 
-function registerShortcut(): void {
-    log('main', 'registering global shortcut', { shortcut: DEFAULT_SHORTCUT });
+function handleShortcutTriggered(): void {
+    log('main', 'global shortcut triggered');
 
-    const ok = globalShortcut.register(DEFAULT_SHORTCUT, () => {
-        log('main', 'global shortcut triggered');
-        void runCaptureFlow().then(async (result) => {
-            if (result.status === 'error' && (!mainWindow || !mainWindow.isFocused())) {
-                log('main', 'showing error dialog from global shortcut path', { message: result.message });
-                await dialog.showMessageBox({
-                    type: 'error',
-                    title: 'SnapText',
-                    message: result.message
-                });
-            }
-        });
+    void runCaptureFlow().then(async (result) => {
+        if (result.status === 'error' && (!mainWindow || !mainWindow.isFocused())) {
+            log('main', 'showing error dialog from global shortcut path', { message: result.message });
+            await dialog.showMessageBox({
+                type: 'error',
+                title: 'ScreenCopy',
+                message: result.message
+            });
+        }
+    });
+}
+
+function restoreShortcut(previousShortcut: string): void {
+    try {
+        const restored = globalShortcut.register(previousShortcut, handleShortcutTriggered);
+        registeredShortcut = restored ? previousShortcut : null;
+        log('main', 'restore shortcut attempted', { previousShortcut, restored, registeredShortcut });
+    } catch (error) {
+        logError('main', 'failed to restore previous shortcut', error);
+        registeredShortcut = null;
+    }
+}
+
+function applyShortcut(shortcut: string): ShortcutUpdateResult {
+    const nextShortcut = shortcut.trim();
+    const previousShortcut = registeredShortcut ?? appSettings.screenshotShortcut ?? DEFAULT_SHORTCUT;
+
+    if (!nextShortcut) {
+        return {
+            status: 'error',
+            shortcut: previousShortcut,
+            message: 'Shortcut cannot be empty.'
+        };
+    }
+
+    if (registeredShortcut) {
+        globalShortcut.unregister(registeredShortcut);
+    }
+
+    try {
+        const ok = globalShortcut.register(nextShortcut, handleShortcutTriggered);
+
+        if (!ok) {
+            restoreShortcut(previousShortcut);
+            return {
+                status: 'error',
+                shortcut: registeredShortcut ?? previousShortcut,
+                message:
+                    'That shortcut is unavailable. It may already be used by macOS or another app.'
+            };
+        }
+
+        registeredShortcut = nextShortcut;
+        appSettings = {
+            ...appSettings,
+            screenshotShortcut: nextShortcut
+        };
+        void persistSettings();
+
+        log('main', 'shortcut updated', { registeredShortcut });
+
+        return {
+            status: 'success',
+            shortcut: registeredShortcut
+        };
+    } catch (error) {
+        logError('main', 'shortcut registration threw an error', error);
+        restoreShortcut(previousShortcut);
+
+        return {
+            status: 'error',
+            shortcut: registeredShortcut ?? previousShortcut,
+            message: 'That key combination is not supported.'
+        };
+    }
+}
+
+function resetShortcut(): ShortcutUpdateResult {
+    appSettings = { ...DEFAULT_SETTINGS };
+    return applyShortcut(DEFAULT_SHORTCUT);
+}
+
+function registerInitialShortcut(): void {
+    const result = applyShortcut(appSettings.screenshotShortcut);
+
+    if (result.status === 'success') {
+        return;
+    }
+
+    log('main', 'saved shortcut failed, falling back to default', {
+        attemptedShortcut: appSettings.screenshotShortcut,
+        message: result.message
     });
 
-    registeredShortcut = ok ? DEFAULT_SHORTCUT : null;
-    log('main', 'global shortcut registration completed', { ok, registeredShortcut });
+    appSettings = { ...DEFAULT_SETTINGS };
+
+    const fallbackResult = applyShortcut(DEFAULT_SHORTCUT);
+    if (fallbackResult.status === 'error') {
+        log('main', 'default shortcut also failed to register', { message: fallbackResult.message });
+    }
 }
 
 const gotLock = app.requestSingleInstanceLock();
 log('main', 'single instance lock result', { gotLock });
+
 if (!gotLock) {
     app.quit();
 }
 
 app.on('second-instance', () => {
     log('main', 'second instance detected');
-    if (mainWindow) {
-        if (mainWindow.isMinimized()) {
-            mainWindow.restore();
-        }
-        mainWindow.focus();
-    } else {
-        mainWindow = createWindow();
-    }
+    showMainWindow();
 });
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+    app.setName('ScreenCopy');
+
     log('main', 'app ready', {
         userData: app.getPath('userData'),
         logFile: getLogFilePath(),
@@ -204,19 +341,19 @@ app.whenReady().then(() => {
         versions: process.versions
     });
 
+    appSettings = await loadSettings();
     mainWindow = createWindow();
-    registerShortcut();
+    registerInitialShortcut();
 
     app.on('activate', () => {
         log('main', 'app activate event');
-        if (!mainWindow) {
-            mainWindow = createWindow();
-        }
+        showMainWindow();
     });
 });
 
 app.on('window-all-closed', () => {
     log('main', 'window-all-closed event');
+
     if (process.platform !== 'darwin') {
         app.quit();
     }
@@ -235,7 +372,7 @@ ipcMain.handle('capture-text', async (): Promise<CaptureResult> => {
         log('ipc', 'showing error dialog for renderer request', { message: result.message });
         await dialog.showMessageBox({
             type: 'error',
-            title: 'SnapText',
+            title: 'ScreenCopy',
             message: result.message
         });
     }
@@ -247,4 +384,27 @@ ipcMain.handle('capture-text', async (): Promise<CaptureResult> => {
 ipcMain.handle('get-shortcut', async (): Promise<string | null> => {
     log('ipc', 'get-shortcut invoked', { registeredShortcut });
     return registeredShortcut;
+});
+
+ipcMain.handle('get-settings', async (): Promise<AppSettings> => {
+    log('ipc', 'get-settings invoked', { appSettings, registeredShortcut });
+
+    return {
+        ...appSettings,
+        screenshotShortcut: registeredShortcut ?? appSettings.screenshotShortcut
+    };
+});
+
+ipcMain.handle('set-shortcut', async (_event, shortcut: string): Promise<ShortcutUpdateResult> => {
+    log('ipc', 'set-shortcut invoked', { shortcut });
+    const result = applyShortcut(shortcut);
+    log('ipc', 'set-shortcut completed', result);
+    return result;
+});
+
+ipcMain.handle('reset-shortcut', async (): Promise<ShortcutUpdateResult> => {
+    log('ipc', 'reset-shortcut invoked');
+    const result = resetShortcut();
+    log('ipc', 'reset-shortcut completed', result);
+    return result;
 });

@@ -3,14 +3,38 @@
     <head>
         <meta charset="UTF-8" />
         <meta
-                http-equiv="Content-Security-Policy"
-                content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline';"
-                />
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline';"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>SnapText</title>
+        <title>ScreenCopy</title>
         <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            html,
+            body,
+            #root {
+                height: 100%;
+            }
+
+            body {
+                margin: 0;
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+                    "Helvetica Neue", Helvetica, Arial, sans-serif;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+                background: #ececec;
+            }
+
+            button,
+            input,
+            textarea,
+            select {
+                font: inherit;
+            }
+        </style>
     </head>
-    <body class="min-h-screen">
+    <body>
         <div id="root"></div>
         <script src="./renderer.js"></script>
     </body>
