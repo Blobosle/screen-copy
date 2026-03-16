@@ -1,4 +1,7 @@
 import { build } from 'esbuild';
+import { cpSync, mkdirSync } from 'node:fs';
+
+mkdirSync('dist/renderer', { recursive: true });
 
 await build({
     entryPoints: ['src/renderer/main.tsx'],
@@ -10,3 +13,5 @@ await build({
     sourcemap: true,
     target: ['chrome114']
 });
+
+cpSync('src/renderer/index.html', 'dist/renderer/index.html');

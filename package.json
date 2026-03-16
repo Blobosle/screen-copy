@@ -9,9 +9,8 @@
         "clean": "rm -rf build/ dist/",
         "build:ts": "tsc -p tsconfig.json",
         "build:renderer": "node ./scripts/build-renderer.mjs",
-        "build:static": "node ./scripts/copy-static.mjs",
         "build:swift": "node ./scripts/build-swift-helper.mjs",
-        "build": "npm run clean && npm run build:ts && npm run build:static && npm run build:swift && npm run build:renderer",
+        "build": "npm run clean && npm run build:ts && npm run build:swift && npm run build:renderer",
         "dev": "npm run build && electron . 2>&1 | tee snaptext-dev.log",
         "dist": "npm run build && electron-builder --mac dmg zip"
     },

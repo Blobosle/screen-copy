@@ -21,6 +21,7 @@ const DEFAULT_SHORTCUT = 'CommandOrControl+Shift+Y';
 const DEFAULT_SETTINGS: AppSettings = {
     screenshotShortcut: DEFAULT_SHORTCUT
 };
+const IS_DEV = !app.isPackaged;
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -432,6 +433,10 @@ app.whenReady().then(async () => {
 
     if (process.platform === 'darwin') {
         app.dock?.hide();
+    }
+
+    if (IS_DEV) {
+        showSettingsWindow();
     }
 
     app.on('activate', () => {
