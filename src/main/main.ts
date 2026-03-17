@@ -12,7 +12,7 @@ import {
     nativeImage,
     systemPreferences
 } from 'electron';
-import { getLogFilePath, log, logError } from './logger.js';
+import { log, logError } from './logger.js';
 import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from './screenshot.js';
 import { recognizeTextFromImage } from './ocr.js';
 import type { AppSettings, CaptureResult, ShortcutUpdateResult } from '../shared/types.js';
@@ -22,7 +22,10 @@ const DEFAULT_SETTINGS: AppSettings = {
     screenshotShortcut: DEFAULT_SHORTCUT
 };
 const IS_DEV = !app.isPackaged;
+// const IS_DEV = false;
+const SETTINGS_PATH = path.join(app.getPath("userData"), "settings.json");
 
+/* State variables */
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let registeredShortcut: string | null = null;
@@ -34,75 +37,60 @@ if (process.platform === 'darwin') {
     app.setActivationPolicy('accessory');
 }
 
-function getSettingsPath(): string {
-    return path.join(app.getPath('userData'), 'settings.json');
-}
-
+/*
+ * Loading settings type AppSettings from settings.json
+ */
 async function loadSettings(): Promise<AppSettings> {
     try {
-        const raw = await fs.readFile(getSettingsPath(), 'utf8');
+        const raw = await fs.readFile(SETTINGS_PATH, 'utf8');
         const parsed = JSON.parse(raw) as Partial<AppSettings>;
 
-        return {
-            screenshotShortcut:
-                typeof parsed.screenshotShortcut === 'string' && parsed.screenshotShortcut.trim().length > 0
-                    ? parsed.screenshotShortcut.trim()
-                    : DEFAULT_SETTINGS.screenshotShortcut
-        };
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-            logError('main', 'failed to load settings file', error);
+        if (typeof parsed.screenshotShortcut === 'string' && parsed.screenshotShortcut.trim().length > 0) {
+            return { screenshotShortcut: parsed.screenshotShortcut.trim() };
         }
-
-        return { ...DEFAULT_SETTINGS };
     }
+    catch (error) {
+        logError('main', 'failed to load settings', error);
+    }
+
+    return { ...DEFAULT_SETTINGS };
 }
 
-async function persistSettings(): Promise<void> {
+/*
+ * Write settings.json file with settings to persist between sessions
+ */
+async function writeSettings(): Promise<void> {
     try {
-        const settingsPath = getSettingsPath();
-        await fs.mkdir(path.dirname(settingsPath), { recursive: true });
-        await fs.writeFile(settingsPath, JSON.stringify(appSettings, null, 2), 'utf8');
-        log('main', 'settings persisted', { settingsPath, appSettings });
+        await fs.mkdir(path.dirname(SETTINGS_PATH), { recursive: true });
+        await fs.writeFile(SETTINGS_PATH, JSON.stringify(appSettings, null, 4), 'utf8');
     } catch (error) {
         logError('main', 'failed to persist settings', error);
     }
 }
 
-function createTrayImage() {
-    const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
-            <rect x="5.5" y="3.5" width="8" height="9" rx="1.5" fill="none" stroke="black" stroke-width="1.5"/>
-            <rect x="3.5" y="5.5" width="8" height="9" rx="1.5" fill="none" stroke="black" stroke-width="1.5"/>
-        </svg>
-    `.trim();
-
-    const image = nativeImage.createFromDataURL(
-        `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
-    );
-
-    image.setTemplateImage(true);
-    return image.resize({ width: 18, height: 18 });
-}
-
-function ensureTray(): Tray {
+/*
+ * Initializing tray icon "SC" and appropriate menu options
+ */
+function initTray(): void {
     if (tray) {
-        return tray;
+        return;
     }
 
-    tray = new Tray(createTrayImage());
-    tray.setToolTip('ScreenCopy');
+    tray = new Tray(nativeImage.createEmpty());
+
+    tray.setTitle("SC");
+    tray.setToolTip("ScreenCopy");
 
     const contextMenu = Menu.buildFromTemplate([
         {
-            label: 'Open Settings',
+            label: "Settings",
             click: () => {
                 void showSettingsWindow();
             }
         },
         { type: 'separator' },
         {
-            label: 'Quit ScreenCopy',
+            label: "Quit",
             click: () => {
                 isQuitting = true;
                 app.quit();
@@ -111,12 +99,6 @@ function ensureTray(): Tray {
     ]);
 
     tray.setContextMenu(contextMenu);
-
-    tray.on('click', () => {
-        void showSettingsWindow();
-    });
-
-    return tray;
 }
 
 function createWindow(): BrowserWindow {
@@ -360,7 +342,7 @@ function applyShortcut(shortcut: string): ShortcutUpdateResult {
             ...appSettings,
             screenshotShortcut: nextShortcut
         };
-        void persistSettings();
+        void writeSettings();
 
         log('main', 'shortcut updated', { registeredShortcut });
 
@@ -418,17 +400,9 @@ app.on('second-instance', () => {
 });
 
 app.whenReady().then(async () => {
-    app.setName('ScreenCopy');
-
-    log('main', 'app ready', {
-        userData: app.getPath('userData'),
-        logFile: getLogFilePath(),
-        platform: process.platform,
-        versions: process.versions
-    });
-
+    /* Load settings are the bindings set previously by the user */
     appSettings = await loadSettings();
-    ensureTray();
+    initTray();
     registerInitialShortcut();
 
     if (process.platform === 'darwin') {
