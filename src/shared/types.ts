@@ -12,7 +12,7 @@ export type CaptureResult =
     };
 
 export interface AppSettings {
-screenshotShortcut: string;
+    screenshotShortcut: string;
 }
 
 export type ShortcutUpdateResult =
