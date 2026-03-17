@@ -19,10 +19,10 @@ import type { AppSettings, CaptureResult, ShortcutUpdateResult } from "../shared
 
 const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Y";
 const DEFAULT_SETTINGS: AppSettings = {
-    screenshotShortcut: DEFAULT_SHORTCUT
+    screenshotShortcut: DEFAULT_SHORTCUT,
+    imageShortcut: "",
 };
 const IS_DEV = !app.isPackaged;
-// const IS_DEV = false;
 const SETTINGS_PATH = path.join(app.getPath("userData"), "settings.json");
 const PRELOAD_PATH = path.join(__dirname, "../preload.js");
 const RENDERER_PATH = path.join(__dirname, "../renderer/index.html");
@@ -46,9 +46,15 @@ async function loadSettings(): Promise<AppSettings> {
     try {
         const raw = await fs.readFile(SETTINGS_PATH, "utf8");
         const parsed = JSON.parse(raw) as Partial<AppSettings>;
+        const settings: AppSettings = { ...DEFAULT_SETTINGS, ...parsed };
 
-        if (typeof parsed.screenshotShortcut === "string" && parsed.screenshotShortcut.trim().length > 0) {
-            return { screenshotShortcut: parsed.screenshotShortcut.trim() };
+        for (const i of Object.keys(settings) as Array<keyof AppSettings>) {
+            if (settings[i].trim().length === 0) {
+                settings[i] = DEFAULT_SETTINGS[i];
+            }
+            else {
+                settings[i] = settings[i].trim();
+            }
         }
     }
     catch (error) {
@@ -374,6 +380,7 @@ app.whenReady().then(async () => {
     initTray();
     registerInitialShortcut();
 
+    /* Hide dock icon */
     if (process.platform === "darwin") {
         app.dock?.hide();
     }
