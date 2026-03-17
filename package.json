@@ -1,7 +1,7 @@
 {
     "name": "ScreenCopy",
-    "version": "0.1.0",
-    "description": "Capture a screen region on macOS, run OCR, and copy only the recognized text to the clipboard.",
+    "version": "0.1.1",
+    "description": "Copy text from a screenshot",
     "main": "dist/main/main.js",
     "author": "Blobosle",
     "license": "GPL-3.0-only",
