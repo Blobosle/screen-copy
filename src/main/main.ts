@@ -1,5 +1,5 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import fs from "node:fs/promises";
+import path from "node:path";
 import {
     app,
     BrowserWindow,
@@ -11,19 +11,21 @@ import {
     Tray,
     nativeImage,
     systemPreferences
-} from 'electron';
-import { log, logError } from './logger.js';
-import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from './screenshot.js';
-import { recognizeTextFromImage } from './ocr.js';
-import type { AppSettings, CaptureResult, ShortcutUpdateResult } from '../shared/types.js';
+} from "electron";
+import { log, logError } from "./logger.js";
+import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from "./screenshot.js";
+import { recognizeTextFromImage } from "./ocr.js";
+import type { AppSettings, CaptureResult, ShortcutUpdateResult } from "../shared/types.js";
 
-const DEFAULT_SHORTCUT = 'CommandOrControl+Shift+Y';
+const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Y";
 const DEFAULT_SETTINGS: AppSettings = {
     screenshotShortcut: DEFAULT_SHORTCUT
 };
 const IS_DEV = !app.isPackaged;
 // const IS_DEV = false;
 const SETTINGS_PATH = path.join(app.getPath("userData"), "settings.json");
+const PRELOAD_PATH = path.join(__dirname, "../preload.js");
+const RENDERER_PATH = path.join(__dirname, "../renderer/index.html");
 
 /* State variables */
 let mainWindow: BrowserWindow | null = null;
@@ -33,8 +35,8 @@ let captureInFlight: Promise<CaptureResult> | null = null;
 let appSettings: AppSettings = { ...DEFAULT_SETTINGS };
 let isQuitting = false;
 
-if (process.platform === 'darwin') {
-    app.setActivationPolicy('accessory');
+if (process.platform === "darwin") {
+    app.setActivationPolicy("accessory");
 }
 
 /*
@@ -42,15 +44,15 @@ if (process.platform === 'darwin') {
  */
 async function loadSettings(): Promise<AppSettings> {
     try {
-        const raw = await fs.readFile(SETTINGS_PATH, 'utf8');
+        const raw = await fs.readFile(SETTINGS_PATH, "utf8");
         const parsed = JSON.parse(raw) as Partial<AppSettings>;
 
-        if (typeof parsed.screenshotShortcut === 'string' && parsed.screenshotShortcut.trim().length > 0) {
+        if (typeof parsed.screenshotShortcut === "string" && parsed.screenshotShortcut.trim().length > 0) {
             return { screenshotShortcut: parsed.screenshotShortcut.trim() };
         }
     }
     catch (error) {
-        logError('main', 'failed to load settings', error);
+        logError("main", "failed to load settings", error);
     }
 
     return { ...DEFAULT_SETTINGS };
@@ -62,9 +64,9 @@ async function loadSettings(): Promise<AppSettings> {
 async function writeSettings(): Promise<void> {
     try {
         await fs.mkdir(path.dirname(SETTINGS_PATH), { recursive: true });
-        await fs.writeFile(SETTINGS_PATH, JSON.stringify(appSettings, null, 4), 'utf8');
+        await fs.writeFile(SETTINGS_PATH, JSON.stringify(appSettings, null, 4), "utf8");
     } catch (error) {
-        logError('main', 'failed to persist settings', error);
+        logError("main", "failed to persist settings", error);
     }
 }
 
@@ -88,7 +90,7 @@ function initTray(): void {
                 void showSettingsWindow();
             }
         },
-        { type: 'separator' },
+        { type: "separator" },
         {
             label: "Quit",
             click: () => {
@@ -101,105 +103,72 @@ function initTray(): void {
     tray.setContextMenu(contextMenu);
 }
 
-function createWindow(): BrowserWindow {
-    log('main', 'creating browser window');
+/*
+ * Creating new settings window if no current window exists
+ */
+function createSettingsWindow(): BrowserWindow {
+    if (mainWindow && mainWindow.isDestroyed()) {
+        return mainWindow;
+    }
 
     const window = new BrowserWindow({
         width: 760,
         height: 460,
         minWidth: 760,
         minHeight: 460,
-        resizable: false,
-        maximizable: false,
         fullscreenable: false,
         show: false,
-        title: 'ScreenCopy',
-        backgroundColor: '#ececec',
+        title: "ScreenCopy",
+        backgroundColor: "#ececec",
         webPreferences: {
-            preload: path.join(__dirname, '../preload.js'),
+            preload: PRELOAD_PATH,
             contextIsolation: true,
             nodeIntegration: false,
             sandbox: false
         }
     });
 
-    const rendererPath = path.join(__dirname, '../renderer/index.html');
-    log('main', 'loading renderer file', { rendererPath });
-    void window.loadFile(rendererPath);
+    window.loadFile(RENDERER_PATH);
 
-    window.on('close', (event) => {
-        if (isQuitting) {
-            return;
-        }
-
-        event.preventDefault();
-        void hideSettingsWindow();
-    });
-
-    window.on('show', () => log('main', 'window shown'));
-    window.on('hide', () => log('main', 'window hidden'));
-    window.on('focus', () => log('main', 'window focused'));
-    window.on('blur', () => log('main', 'window blurred'));
-    window.on('closed', () => {
-        log('main', 'window closed');
+    window.on("closed", () => {
         mainWindow = null;
     });
 
     return window;
 }
 
-function ensureWindow(): BrowserWindow {
-    if (!mainWindow || mainWindow.isDestroyed()) {
-        mainWindow = createWindow();
-    }
-
-    return mainWindow;
-}
-
+/*
+ * Refocuses or calls the createSettingsWindow function to create a new window
+ * depending on the current status of the window
+ */
 async function showSettingsWindow(): Promise<void> {
-    const window = ensureWindow();
-
-    if (process.platform === 'darwin') {
-        app.setActivationPolicy('regular');
-        await app.dock?.show();
+    if (!mainWindow) {
+        mainWindow = createSettingsWindow();
     }
 
-    if (window.isMinimized()) {
-        window.restore();
+    if (mainWindow.isMinimized()) {
+        mainWindow.restore();
     }
 
-    window.show();
-    app.focus();
-    window.focus();
-}
-
-async function hideSettingsWindow(): Promise<void> {
-    if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
-        mainWindow.hide();
-    }
-
-    if (process.platform === 'darwin') {
-        app.dock?.hide();
-        app.setActivationPolicy('accessory');
-    }
+    mainWindow.show();
 }
 
 function broadcastCaptureResult(result: CaptureResult): void {
-    log('main', 'broadcasting capture result', result);
+    log("main", "broadcasting capture result", result);
 
     if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('capture-result', result);
+        mainWindow.webContents.send("capture-result", result);
     }
 }
 
 function getScreenAccessStatus(): string {
-    const status = systemPreferences.getMediaAccessStatus('screen');
-    log('main', 'screen access status checked', { status });
+    const status = systemPreferences.getMediaAccessStatus("screen");
+    log("main", "screen access status checked", { status });
     return status;
 }
 
 async function runCaptureFlow(): Promise<CaptureResult> {
-    log('main', 'runCaptureFlow called', {
+    log("main", "runCaptureFlow called", {
         captureInFlight: Boolean(captureInFlight),
         hasMainWindow: Boolean(mainWindow),
         mainWindowVisible: mainWindow?.isVisible() ?? null,
@@ -207,19 +176,19 @@ async function runCaptureFlow(): Promise<CaptureResult> {
     });
 
     if (captureInFlight) {
-        log('main', 'reusing in-flight capture promise');
+        log("main", "reusing in-flight capture promise");
         return captureInFlight;
     }
 
     captureInFlight = (async () => {
         const accessStatus = getScreenAccessStatus();
 
-        if (accessStatus === 'denied' || accessStatus === 'restricted') {
-            log('main', 'capture blocked by screen access status', { accessStatus });
+        if (accessStatus === "denied" || accessStatus === "restricted") {
+            log("main", "capture blocked by screen access status", { accessStatus });
             return {
-                status: 'error',
+                status: "error",
                 message:
-                    'Screen Recording access is blocked for ScreenCopy. Open System Settings → Privacy & Security → Screen & System Audio Recording, allow the app, then reopen it.'
+                    "Screen Recording access is blocked for ScreenCopy. Open System Settings → Privacy & Security → Screen & System Audio Recording, allow the app, then reopen it."
             } satisfies CaptureResult;
         }
 
@@ -227,45 +196,45 @@ async function runCaptureFlow(): Promise<CaptureResult> {
 
         try {
             if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
-                log('main', 'hiding main window before interactive screenshot');
+                log("main", "hiding main window before interactive screenshot");
                 mainWindow.hide();
             }
 
             screenshotPath = await captureInteractiveScreenshot();
-            log('main', 'interactive screenshot finished', { screenshotPath });
+            log("main", "interactive screenshot finished", { screenshotPath });
 
             const text = await recognizeTextFromImage(screenshotPath);
-            log('main', 'OCR result ready', {
+            log("main", "OCR result ready", {
                 textLength: text.length,
                 preview: text.slice(0, 120)
             });
 
             if (!text) {
-                log('main', 'OCR completed but returned empty text');
+                log("main", "OCR completed but returned empty text");
                 return {
-                    status: 'error',
-                    message: 'No text or QR code was detected in the selected area.'
+                    status: "error",
+                    message: "No text or QR code was detected in the selected area."
                 } satisfies CaptureResult;
             }
 
             clipboard.writeText(text);
-            log('main', 'clipboard updated', { textLength: text.length });
+            log("main", "clipboard updated", { textLength: text.length });
 
             return {
-                status: 'success',
+                status: "success",
                 text
             } satisfies CaptureResult;
         } catch (error) {
             if (error instanceof ScreenshotCancelledError) {
-                log('main', 'capture flow resolved as cancelled');
-                return { status: 'cancelled' } satisfies CaptureResult;
+                log("main", "capture flow resolved as cancelled");
+                return { status: "cancelled" } satisfies CaptureResult;
             }
 
-            logError('main', 'capture flow failed', error);
-            const message = error instanceof Error ? error.message : 'Unexpected OCR error.';
+            logError("main", "capture flow failed", error);
+            const message = error instanceof Error ? error.message : "Unexpected OCR error.";
 
             return {
-                status: 'error',
+                status: "error",
                 message
             } satisfies CaptureResult;
         } finally {
@@ -277,20 +246,20 @@ async function runCaptureFlow(): Promise<CaptureResult> {
 
     const result = await captureInFlight;
     captureInFlight = null;
-    log('main', 'runCaptureFlow resolved', result);
+    log("main", "runCaptureFlow resolved", result);
     broadcastCaptureResult(result);
     return result;
 }
 
 function handleShortcutTriggered(): void {
-    log('main', 'global shortcut triggered');
+    log("main", "global shortcut triggered");
 
     void runCaptureFlow().then(async (result) => {
-        if (result.status === 'error' && (!mainWindow || !mainWindow.isFocused())) {
-            log('main', 'showing error dialog from global shortcut path', { message: result.message });
+        if (result.status === "error" && (!mainWindow || !mainWindow.isFocused())) {
+            log("main", "showing error dialog from global shortcut path", { message: result.message });
             await dialog.showMessageBox({
-                type: 'error',
-                title: 'ScreenCopy',
+                type: "error",
+                title: "ScreenCopy",
                 message: result.message
             });
         }
@@ -301,9 +270,9 @@ function restoreShortcut(previousShortcut: string): void {
     try {
         const restored = globalShortcut.register(previousShortcut, handleShortcutTriggered);
         registeredShortcut = restored ? previousShortcut : null;
-        log('main', 'restore shortcut attempted', { previousShortcut, restored, registeredShortcut });
+        log("main", "restore shortcut attempted", { previousShortcut, restored, registeredShortcut });
     } catch (error) {
-        logError('main', 'failed to restore previous shortcut', error);
+        logError("main", "failed to restore previous shortcut", error);
         registeredShortcut = null;
     }
 }
@@ -314,9 +283,9 @@ function applyShortcut(shortcut: string): ShortcutUpdateResult {
 
     if (!nextShortcut) {
         return {
-            status: 'error',
+            status: "error",
             shortcut: previousShortcut,
-            message: 'Shortcut cannot be empty.'
+            message: "Shortcut cannot be empty."
         };
     }
 
@@ -330,10 +299,10 @@ function applyShortcut(shortcut: string): ShortcutUpdateResult {
         if (!ok) {
             restoreShortcut(previousShortcut);
             return {
-                status: 'error',
+                status: "error",
                 shortcut: registeredShortcut ?? previousShortcut,
                 message:
-                    'That shortcut is unavailable. It may already be used by macOS or another app.'
+                    "That shortcut is unavailable. It may already be used by macOS or another app."
             };
         }
 
@@ -344,20 +313,20 @@ function applyShortcut(shortcut: string): ShortcutUpdateResult {
         };
         void writeSettings();
 
-        log('main', 'shortcut updated', { registeredShortcut });
+        log("main", "shortcut updated", { registeredShortcut });
 
         return {
-            status: 'success',
+            status: "success",
             shortcut: registeredShortcut
         };
     } catch (error) {
-        logError('main', 'shortcut registration threw an error', error);
+        logError("main", "shortcut registration threw an error", error);
         restoreShortcut(previousShortcut);
 
         return {
-            status: 'error',
+            status: "error",
             shortcut: registeredShortcut ?? previousShortcut,
-            message: 'That key combination is not supported.'
+            message: "That key combination is not supported."
         };
     }
 }
@@ -370,11 +339,11 @@ function resetShortcut(): ShortcutUpdateResult {
 function registerInitialShortcut(): void {
     const result = applyShortcut(appSettings.screenshotShortcut);
 
-    if (result.status === 'success') {
+    if (result.status === "success") {
         return;
     }
 
-    log('main', 'saved shortcut failed, falling back to default', {
+    log("main", "saved shortcut failed, falling back to default", {
         attemptedShortcut: appSettings.screenshotShortcut,
         message: result.message
     });
@@ -382,20 +351,20 @@ function registerInitialShortcut(): void {
     appSettings = { ...DEFAULT_SETTINGS };
 
     const fallbackResult = applyShortcut(DEFAULT_SHORTCUT);
-    if (fallbackResult.status === 'error') {
-        log('main', 'default shortcut also failed to register', { message: fallbackResult.message });
+    if (fallbackResult.status === "error") {
+        log("main", "default shortcut also failed to register", { message: fallbackResult.message });
     }
 }
 
 const gotLock = app.requestSingleInstanceLock();
-log('main', 'single instance lock result', { gotLock });
+log("main", "single instance lock result", { gotLock });
 
 if (!gotLock) {
     app.quit();
 }
 
-app.on('second-instance', () => {
-    log('main', 'second instance detected');
+app.on("second-instance", () => {
+    log("main", "second instance detected");
     void showSettingsWindow();
 });
 
@@ -405,7 +374,7 @@ app.whenReady().then(async () => {
     initTray();
     registerInitialShortcut();
 
-    if (process.platform === 'darwin') {
+    if (process.platform === "darwin") {
         app.dock?.hide();
     }
 
@@ -413,53 +382,53 @@ app.whenReady().then(async () => {
         showSettingsWindow();
     }
 
-    app.on('activate', () => {
-        log('main', 'app activate event');
+    app.on("activate", () => {
+        log("main", "app activate event");
         void showSettingsWindow();
     });
 });
 
-app.on('before-quit', () => {
+app.on("before-quit", () => {
     isQuitting = true;
 });
 
-app.on('window-all-closed', () => {
-    log('main', 'window-all-closed event');
+app.on("window-all-closed", () => {
+    log("main", "window-all-closed event");
 
-    if (process.platform !== 'darwin') {
+    if (process.platform !== "darwin") {
         app.quit();
     }
 });
 
-app.on('will-quit', () => {
-    log('main', 'will-quit event');
+app.on("will-quit", () => {
+    log("main", "will-quit event");
     globalShortcut.unregisterAll();
 });
 
-ipcMain.handle('capture-text', async (): Promise<CaptureResult> => {
-    log('ipc', 'capture-text invoked from renderer');
+ipcMain.handle("capture-text", async (): Promise<CaptureResult> => {
+    log("ipc", "capture-text invoked from renderer");
     const result = await runCaptureFlow();
 
-    if (result.status === 'error' && mainWindow?.isFocused() !== true) {
-        log('ipc', 'showing error dialog for renderer request', { message: result.message });
+    if (result.status === "error" && mainWindow?.isFocused() !== true) {
+        log("ipc", "showing error dialog for renderer request", { message: result.message });
         await dialog.showMessageBox({
-            type: 'error',
-            title: 'ScreenCopy',
+            type: "error",
+            title: "ScreenCopy",
             message: result.message
         });
     }
 
-    log('ipc', 'capture-text returning result to renderer', result);
+    log("ipc", "capture-text returning result to renderer", result);
     return result;
 });
 
-ipcMain.handle('get-shortcut', async (): Promise<string | null> => {
-    log('ipc', 'get-shortcut invoked', { registeredShortcut });
+ipcMain.handle("get-shortcut", async (): Promise<string | null> => {
+    log("ipc", "get-shortcut invoked", { registeredShortcut });
     return registeredShortcut;
 });
 
-ipcMain.handle('get-settings', async (): Promise<AppSettings> => {
-    log('ipc', 'get-settings invoked', { appSettings, registeredShortcut });
+ipcMain.handle("get-settings", async (): Promise<AppSettings> => {
+    log("ipc", "get-settings invoked", { appSettings, registeredShortcut });
 
     return {
         ...appSettings,
@@ -467,16 +436,16 @@ ipcMain.handle('get-settings', async (): Promise<AppSettings> => {
     };
 });
 
-ipcMain.handle('set-shortcut', async (_event, shortcut: string): Promise<ShortcutUpdateResult> => {
-    log('ipc', 'set-shortcut invoked', { shortcut });
+ipcMain.handle("set-shortcut", async (_event, shortcut: string): Promise<ShortcutUpdateResult> => {
+    log("ipc", "set-shortcut invoked", { shortcut });
     const result = applyShortcut(shortcut);
-    log('ipc', 'set-shortcut completed', result);
+    log("ipc", "set-shortcut completed", result);
     return result;
 });
 
-ipcMain.handle('reset-shortcut', async (): Promise<ShortcutUpdateResult> => {
-    log('ipc', 'reset-shortcut invoked');
+ipcMain.handle("reset-shortcut", async (): Promise<ShortcutUpdateResult> => {
+    log("ipc", "reset-shortcut invoked");
     const result = resetShortcut();
-    log('ipc', 'reset-shortcut completed', result);
+    log("ipc", "reset-shortcut completed", result);
     return result;
 });
