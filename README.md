@@ -6,9 +6,11 @@ ScreenCopy allows you to copy text and QR codes through taking screenshots on ma
 
 </div>
 
-## Requirement for Intallation
+## Requirement for Installation
 
-Given the application is not signed on macOS, when attempting to open the app for the first time you may be unable to do so. If you encounter this, run the following command after dragging the application into the `/Applications` directory:
+Given the application is not signed on macOS, when attempting to open the app for the first time you may be unable to do so.
+
+If you encounter this, run the following command after dragging the application into the `/Applications` directory:
 
 ```bash
 xattr -d com.apple.quarantine /Applications/ScreenCopy.app
