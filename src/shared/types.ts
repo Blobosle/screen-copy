@@ -15,14 +15,3 @@ export interface AppSettings {
     screenshotShortcut: string;
     imageShortcut: string;
 }
-
-export type ShortcutUpdateResult =
-    | {
-        status: 'success';
-        shortcut: string;
-    }
-    | {
-        status: 'error';
-        shortcut: string;
-        message: string;
-    };
