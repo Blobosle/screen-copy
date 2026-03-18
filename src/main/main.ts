@@ -12,7 +12,6 @@ import {
     nativeImage,
     systemPreferences
 } from "electron";
-import { log, logError } from "./logger.js";
 import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from "./screenshot.js";
 import { recognizeTextFromImage } from "./ocr.js";
 import type { AppSettings, CaptureResult } from "../shared/types.js";
@@ -78,7 +77,7 @@ async function writeSettings(): Promise<void> {
         await fs.mkdir(path.dirname(SETTINGS_PATH), { recursive: true });
         await fs.writeFile(SETTINGS_PATH, JSON.stringify(appSettings, null, 4), "utf8");
     } catch (error) {
-        logError("main", "failed to persist settings", error);
+        console.log("ERROR: [main.ts:writeSettings()] Writting catched", error);
     }
 }
 
@@ -165,8 +164,6 @@ async function showSettingsWindow(): Promise<void> {
 }
 
 function broadcastCaptureResult(result: CaptureResult): void {
-    log("main", "broadcasting capture result", result);
-
     if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send("capture-result", result);
     }
@@ -174,13 +171,11 @@ function broadcastCaptureResult(result: CaptureResult): void {
 
 function getScreenAccessStatus(): string {
     const status = systemPreferences.getMediaAccessStatus("screen");
-    log("main", "screen access status checked", { status });
     return status;
 }
 
 async function runCaptureFlow(): Promise<CaptureResult> {
     if (captureInFlight) {
-        log("main", "reusing in-flight capture promise");
         return captureInFlight;
     }
 
@@ -188,7 +183,6 @@ async function runCaptureFlow(): Promise<CaptureResult> {
         const accessStatus = getScreenAccessStatus();
 
         if (accessStatus === "denied" || accessStatus === "restricted") {
-            log("main", "capture blocked by screen access status", { accessStatus });
             return {
                 status: "error",
                 message:
@@ -200,21 +194,13 @@ async function runCaptureFlow(): Promise<CaptureResult> {
 
         try {
             if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
-                log("main", "hiding main window before interactive screenshot");
                 mainWindow.hide();
             }
 
             screenshotPath = await captureInteractiveScreenshot();
-            log("main", "interactive screenshot finished", { screenshotPath });
-
             const text = await recognizeTextFromImage(screenshotPath);
-            log("main", "OCR result ready", {
-                textLength: text.length,
-                preview: text.slice(0, 120)
-            });
 
             if (!text) {
-                log("main", "OCR completed but returned empty text");
                 return {
                     status: "error",
                     message: "No text or QR code was detected in the selected area."
@@ -222,7 +208,6 @@ async function runCaptureFlow(): Promise<CaptureResult> {
             }
 
             clipboard.writeText(text);
-            log("main", "clipboard updated", { textLength: text.length });
 
             return {
                 status: "success",
@@ -230,11 +215,9 @@ async function runCaptureFlow(): Promise<CaptureResult> {
             } satisfies CaptureResult;
         } catch (error) {
             if (error instanceof ScreenshotCancelledError) {
-                log("main", "capture flow resolved as cancelled");
                 return { status: "cancelled" } satisfies CaptureResult;
             }
 
-            logError("main", "capture flow failed", error);
             const message = error instanceof Error ? error.message : "Unexpected OCR error.";
 
             return {
@@ -250,17 +233,13 @@ async function runCaptureFlow(): Promise<CaptureResult> {
 
     const result = await captureInFlight;
     captureInFlight = null;
-    log("main", "runCaptureFlow resolved", result);
     broadcastCaptureResult(result);
     return result;
 }
 
 function handleShortcutTriggered(): void {
-    log("main", "global shortcut triggered");
-
     void runCaptureFlow().then(async (result) => {
         if (result.status === "error" && (!mainWindow || !mainWindow.isFocused())) {
-            log("main", "showing error dialog from global shortcut path", { message: result.message });
             await dialog.showMessageBox({
                 type: "error",
                 title: "ScreenCopy",
@@ -281,7 +260,6 @@ function applyShortcut(shortcutKey: keyof AppSettings, shortcut: string): boolea
 
     const newShortcut = shortcut.trim();
     const oldShortcut = appSettings[shortcutKey];
-    console.log("Old shortcut: ", oldShortcut);
 
     if (newShortcut === oldShortcut || newShortcut.length <= 0) {
         console.log("LOG: [main.ts:applyShortcut()] Shortcut has not changed");
@@ -335,18 +313,14 @@ app.on("window-all-closed", () => { });
 
 /* Cleanup of shortcuts */
 app.on("will-quit", () => {
-    console.log("UNREGISTER COMMAND");
-
-    console.log(globalShortcut.isRegistered("CommandOrControl+P"));
     globalShortcut.unregisterAll();
-    console.log(globalShortcut.isRegistered("CommandOrControl+P"));
 });
 
 ipcMain.handle("capture-text", async (): Promise<CaptureResult> => {
     const result = await runCaptureFlow();
 
     if (result.status === "error" && mainWindow?.isFocused() !== true) {
-        log("ipc", "showing error dialog for renderer request", { message: result.message });
+        console.log("ERROR: [main.ts:ipcMain.handle(capture-text)] Result status returned an error");
         await dialog.showMessageBox({
             type: "error",
             title: "ScreenCopy",
@@ -354,7 +328,6 @@ ipcMain.handle("capture-text", async (): Promise<CaptureResult> => {
         });
     }
 
-    log("ipc", "capture-text returning result to renderer", result);
     return result;
 });
 
