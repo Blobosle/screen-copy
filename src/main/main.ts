@@ -356,7 +356,6 @@ ipcMain.handle("capture-text", async (): Promise<CaptureResult> => {
  * TODO: Handle multiple shortcuts
  */
 ipcMain.handle("get-shortcut", async (): Promise<string | null> => {
-    log("ipc", "get-shortcut invoked", { registeredShortcut });
     return appSettings.screenshotShortcut;
 });
 

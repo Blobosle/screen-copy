@@ -1,4 +1,4 @@
-import type { AppSettings, CaptureResult, ShortcutUpdateResult } from '../shared/types';
+import type { AppSettings, CaptureResult } from '../shared/types';
 
 declare global {
     interface Window {
@@ -6,10 +6,10 @@ declare global {
             captureText: () => Promise<CaptureResult>;
             getShortcut: () => Promise<string | null>;
             getSettings: () => Promise<AppSettings>;
-            setShortcut: (shortcut: string) => Promise<ShortcutUpdateResult>;
+            setShortcut: (shortcut: string) => Promise<void>;
             onCaptureResult: (listener: (result: CaptureResult) => void) => void;
         };
     }
 }
 
-export {};
+export { };

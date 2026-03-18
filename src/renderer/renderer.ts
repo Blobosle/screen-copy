@@ -16,7 +16,7 @@ const shortcutHint = document.getElementById('shortcut-hint') as HTMLParagraphEl
 const statusNode = document.getElementById('status') as HTMLDivElement;
 const previewNode = document.getElementById('preview') as HTMLTextAreaElement;
 
-function debug(_message: string, _details?: unknown): void {}
+function debug(_message: string, _details?: unknown): void { }
 
 function setStatus(kind: 'idle' | 'working' | 'success' | 'error', message: string): void {
     debug('setStatus', { kind, message });
@@ -28,10 +28,10 @@ function setStatus(kind: 'idle' | 'working' | 'success' | 'error', message: stri
         kind === 'idle'
             ? ' bg-indigo-50 text-indigo-900 dark:bg-slate-800 dark:text-slate-100'
             : kind === 'working'
-            ? ' bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-100'
-            : kind === 'success'
-            ? ' bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100'
-            : ' bg-rose-50 text-rose-900 dark:bg-rose-950 dark:text-rose-100';
+                ? ' bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-100'
+                : kind === 'success'
+                    ? ' bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100'
+                    : ' bg-rose-50 text-rose-900 dark:bg-rose-950 dark:text-rose-100';
 
     statusNode.className = baseClass + variantClass;
     statusNode.textContent = message;

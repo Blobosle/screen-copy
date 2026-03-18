@@ -33,7 +33,7 @@ export function SettingsWindow(): React.JSX.Element {
 
         void (async () => {
             try {
-                const settings = await window.screenCopy.getSettings();
+                const settings = await window.snapText.getSettings();
 
                 if (!cancelled) {
                     setShortcut(formatAcceleratorForDisplay(settings.screenshotShortcut));
@@ -238,8 +238,8 @@ export function SettingsWindow(): React.JSX.Element {
                                 status.kind === 'error'
                                     ? 'text-red-600'
                                     : status.kind === 'success'
-                                    ? 'text-neutral-700'
-                                    : 'text-neutral-500'
+                                        ? 'text-neutral-700'
+                                        : 'text-neutral-500'
                             ].join(' ')}
                         >
                             {status.message}
