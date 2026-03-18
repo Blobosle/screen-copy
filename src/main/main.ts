@@ -56,6 +56,10 @@ async function loadSettings(): Promise<AppSettings> {
             else {
                 settings[i] = settings[i].trim();
             }
+
+            if (!globalShortcut.register(settings[i], handleShortcutTriggered)) {
+                console.log("ERROR: [main.ts:applyShortcut()] Shortcut could not be registered");
+            }
         }
 
         return settings;
@@ -176,13 +180,6 @@ function getScreenAccessStatus(): string {
 }
 
 async function runCaptureFlow(): Promise<CaptureResult> {
-    log("main", "runCaptureFlow called", {
-        captureInFlight: Boolean(captureInFlight),
-        hasMainWindow: Boolean(mainWindow),
-        mainWindowVisible: mainWindow?.isVisible() ?? null,
-        mainWindowFocused: mainWindow?.isFocused() ?? null
-    });
-
     if (captureInFlight) {
         log("main", "reusing in-flight capture promise");
         return captureInFlight;
@@ -340,7 +337,6 @@ app.on("will-quit", () => {
 });
 
 ipcMain.handle("capture-text", async (): Promise<CaptureResult> => {
-    log("ipc", "capture-text invoked from renderer");
     const result = await runCaptureFlow();
 
     if (result.status === "error" && mainWindow?.isFocused() !== true) {
