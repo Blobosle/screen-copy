@@ -16,6 +16,7 @@ import { log, logError } from "./logger.js";
 import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from "./screenshot.js";
 import { recognizeTextFromImage } from "./ocr.js";
 import type { AppSettings, CaptureResult, ShortcutUpdateResult } from "../shared/types.js";
+import { write } from "node:original-fs";
 
 const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Y";
 const DEFAULT_SETTINGS: AppSettings = {
@@ -56,6 +57,8 @@ async function loadSettings(): Promise<AppSettings> {
                 settings[i] = settings[i].trim();
             }
         }
+
+        return settings;
     }
     catch (error) {
         logError("main", "failed to load settings", error);
@@ -283,83 +286,32 @@ function restoreShortcut(previousShortcut: string): void {
     }
 }
 
-function applyShortcut(shortcut: string): ShortcutUpdateResult {
-    const nextShortcut = shortcut.trim();
-    const previousShortcut = registeredShortcut ?? appSettings.screenshotShortcut ?? DEFAULT_SHORTCUT;
-
-    if (!nextShortcut) {
-        return {
-            status: "error",
-            shortcut: previousShortcut,
-            message: "Shortcut cannot be empty."
-        };
-    }
-
-    if (registeredShortcut) {
-        globalShortcut.unregister(registeredShortcut);
-    }
-
-    try {
-        const ok = globalShortcut.register(nextShortcut, handleShortcutTriggered);
-
-        if (!ok) {
-            restoreShortcut(previousShortcut);
-            return {
-                status: "error",
-                shortcut: registeredShortcut ?? previousShortcut,
-                message:
-                    "That shortcut is unavailable. It may already be used by macOS or another app."
-            };
-        }
-
-        registeredShortcut = nextShortcut;
-        appSettings = {
-            ...appSettings,
-            screenshotShortcut: nextShortcut
-        };
-        void writeSettings();
-
-        log("main", "shortcut updated", { registeredShortcut });
-
-        return {
-            status: "success",
-            shortcut: registeredShortcut
-        };
-    } catch (error) {
-        logError("main", "shortcut registration threw an error", error);
-        restoreShortcut(previousShortcut);
-
-        return {
-            status: "error",
-            shortcut: registeredShortcut ?? previousShortcut,
-            message: "That key combination is not supported."
-        };
-    }
-}
-
-function resetShortcut(): ShortcutUpdateResult {
-    appSettings = { ...DEFAULT_SETTINGS };
-    return applyShortcut(DEFAULT_SHORTCUT);
-}
-
-function registerInitialShortcut(): void {
-    const result = applyShortcut(appSettings.screenshotShortcut);
-
-    if (result.status === "success") {
+/*
+ * Applies a shortcut change for a specified shortcut key
+ */
+function applyShortcut(shortcutKey: keyof AppSettings, shortcut: string): void {
+    if (!shortcutKey || !shortcut) {
+        console.log("ERROR: [main.ts:applyShortcut()] Argument is null");
         return;
     }
 
-    log("main", "saved shortcut failed, falling back to default", {
-        attemptedShortcut: appSettings.screenshotShortcut,
-        message: result.message
-    });
+    const newShortcut = shortcut.trim();
+    const oldShortcut = appSettings[shortcutKey];
 
-    appSettings = { ...DEFAULT_SETTINGS };
-
-    const fallbackResult = applyShortcut(DEFAULT_SHORTCUT);
-    if (fallbackResult.status === "error") {
-        log("main", "default shortcut also failed to register", { message: fallbackResult.message });
+    if (newShortcut === oldShortcut || newShortcut.length <= 0) {
+        console.log("LOG: [main.ts:applyShortcut()] Shortcut has not changed");
+        return;
     }
+
+    globalShortcut.unregister(oldShortcut);
+
+    if (!globalShortcut.register(newShortcut, handleShortcutTriggered)) {
+        console.log("ERROR: [main.ts:applyShortcut()] Shortcut could not be registered");
+        return;
+    }
+
+    appSettings[shortcutKey] = shortcut;
+    writeSettings();
 }
 
 const gotLock = app.requestSingleInstanceLock();
@@ -377,8 +329,8 @@ app.on("second-instance", () => {
 app.whenReady().then(async () => {
     /* Load settings are the bindings set previously by the user */
     appSettings = await loadSettings();
+    /* Load tray icon */
     initTray();
-    registerInitialShortcut();
 
     /* Hide dock icon */
     if (process.platform === "darwin") {
@@ -429,30 +381,36 @@ ipcMain.handle("capture-text", async (): Promise<CaptureResult> => {
     return result;
 });
 
+/*
+ * TODO: Handle multiple shortcuts
+ */
 ipcMain.handle("get-shortcut", async (): Promise<string | null> => {
     log("ipc", "get-shortcut invoked", { registeredShortcut });
-    return registeredShortcut;
+    return appSettings.screenshotShortcut;
 });
 
+/*
+ * TODO: Handle multiple shortcuts
+ */
 ipcMain.handle("get-settings", async (): Promise<AppSettings> => {
     log("ipc", "get-settings invoked", { appSettings, registeredShortcut });
 
     return {
         ...appSettings,
-        screenshotShortcut: registeredShortcut ?? appSettings.screenshotShortcut
+        screenshotShortcut: appSettings.screenshotShortcut
     };
 });
 
-ipcMain.handle("set-shortcut", async (_event, shortcut: string): Promise<ShortcutUpdateResult> => {
-    log("ipc", "set-shortcut invoked", { shortcut });
-    const result = applyShortcut(shortcut);
-    log("ipc", "set-shortcut completed", result);
-    return result;
+/*
+ * TODO: Handle specific shortcut sets
+ */
+ipcMain.handle("set-shortcut", async (_event, shortcut: string): Promise<void> => {
+    applyShortcut("screenshotShortcut", shortcut);
 });
 
-ipcMain.handle("reset-shortcut", async (): Promise<ShortcutUpdateResult> => {
-    log("ipc", "reset-shortcut invoked");
-    const result = resetShortcut();
-    log("ipc", "reset-shortcut completed", result);
-    return result;
+/*
+ * TODO: Handle specific shortcut resets
+ */
+ipcMain.handle("reset-shortcut", async (): Promise<void> => {
+    appSettings = { ...DEFAULT_SETTINGS };
 });
