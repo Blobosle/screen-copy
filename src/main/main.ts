@@ -15,15 +15,16 @@ import {
 import { log, logError } from "./logger.js";
 import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from "./screenshot.js";
 import { recognizeTextFromImage } from "./ocr.js";
-import type { AppSettings, CaptureResult, ShortcutUpdateResult } from "../shared/types.js";
-import { write } from "node:original-fs";
+import type { AppSettings, CaptureResult } from "../shared/types.js";
 
 const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Y";
 const DEFAULT_SETTINGS: AppSettings = {
     screenshotShortcut: DEFAULT_SHORTCUT,
     imageShortcut: "",
 };
+
 const IS_DEV = !app.isPackaged;
+// const IS_DEV = false;
 const SETTINGS_PATH = path.join(app.getPath("userData"), "settings.json");
 const PRELOAD_PATH = path.join(__dirname, "../preload.js");
 const RENDERER_PATH = path.join(__dirname, "../renderer/index.html");
@@ -34,7 +35,6 @@ let tray: Tray | null = null;
 let registeredShortcut: string | null = null;
 let captureInFlight: Promise<CaptureResult> | null = null;
 let appSettings: AppSettings = { ...DEFAULT_SETTINGS };
-let isQuitting = false;
 
 if (process.platform === "darwin") {
     app.setActivationPolicy("accessory");
@@ -103,7 +103,6 @@ function initTray(): void {
         {
             label: "Quit",
             click: () => {
-                isQuitting = true;
                 app.quit();
             }
         }
@@ -275,17 +274,6 @@ function handleShortcutTriggered(): void {
     });
 }
 
-function restoreShortcut(previousShortcut: string): void {
-    try {
-        const restored = globalShortcut.register(previousShortcut, handleShortcutTriggered);
-        registeredShortcut = restored ? previousShortcut : null;
-        log("main", "restore shortcut attempted", { previousShortcut, restored, registeredShortcut });
-    } catch (error) {
-        logError("main", "failed to restore previous shortcut", error);
-        registeredShortcut = null;
-    }
-}
-
 /*
  * Applies a shortcut change for a specified shortcut key
  */
@@ -314,18 +302,19 @@ function applyShortcut(shortcutKey: keyof AppSettings, shortcut: string): void {
     writeSettings();
 }
 
-const gotLock = app.requestSingleInstanceLock();
-log("main", "single instance lock result", { gotLock });
+/* Makes sure there is only one instance of the app */
+if (!app.requestSingleInstanceLock()) { app.quit(); }
 
-if (!gotLock) {
-    app.quit();
-}
-
+/*
+ * Handles the case where the app is opened twice
+ */
 app.on("second-instance", () => {
-    log("main", "second instance detected");
-    void showSettingsWindow();
+    showSettingsWindow();
 });
 
+/*
+ * Initialization function for the app
+ */
 app.whenReady().then(async () => {
     /* Load settings are the bindings set previously by the user */
     appSettings = await loadSettings();
@@ -340,27 +329,13 @@ app.whenReady().then(async () => {
     if (IS_DEV) {
         showSettingsWindow();
     }
-
-    app.on("activate", () => {
-        log("main", "app activate event");
-        void showSettingsWindow();
-    });
 });
 
-app.on("before-quit", () => {
-    isQuitting = true;
-});
+/* Intercepts window closing app quitting procedures */
+app.on("window-all-closed", () => { });
 
-app.on("window-all-closed", () => {
-    log("main", "window-all-closed event");
-
-    if (process.platform !== "darwin") {
-        app.quit();
-    }
-});
-
+/* Cleanup of shortcuts */
 app.on("will-quit", () => {
-    log("main", "will-quit event");
     globalShortcut.unregisterAll();
 });
 
