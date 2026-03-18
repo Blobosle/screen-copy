@@ -145,20 +145,7 @@ export function SettingsWindow(): React.JSX.Element {
         void (async () => {
             try {
                 const result = await window.screenCopy.resetShortcut();
-                setShortcut(formatAcceleratorForDisplay(result.shortcut));
-
-                if (result.status === 'success') {
-                    setStatus({
-                        kind: 'success',
-                        message: 'Shortcut reset to default.'
-                    });
-                    return;
-                }
-
-                setStatus({
-                    kind: 'error',
-                    message: result.message
-                });
+                setShortcut(formatAcceleratorForDisplay(result.screenshotShortcut));
             } catch (error) {
                 setStatus({
                     kind: 'error',

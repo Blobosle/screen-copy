@@ -7,6 +7,7 @@ declare global {
             getShortcut: () => Promise<string | null>;
             getSettings: () => Promise<AppSettings>;
             setShortcut: (shortcut: string) => Promise<boolean>;
+            resetShortcut: () => Promise<AppSettings>;
             onCaptureResult: (listener: (result: CaptureResult) => void) => void;
         };
     }

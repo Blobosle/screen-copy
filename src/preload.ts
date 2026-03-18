@@ -18,7 +18,7 @@ const api = {
         const result = await ipcRenderer.invoke('set-shortcut', shortcut);
         return result;
     },
-    resetShortcut: async (): Promise<void> => {
+    resetShortcut: async (): Promise<AppSettings> => {
         const result = await ipcRenderer.invoke('reset-shortcut');
         return result;
     },

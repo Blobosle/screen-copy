@@ -32,7 +32,6 @@ const RENDERER_PATH = path.join(__dirname, "../renderer/index.html");
 /* State variables */
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
-let registeredShortcut: string | null = null;
 let captureInFlight: Promise<CaptureResult> | null = null;
 let appSettings: AppSettings = { ...DEFAULT_SETTINGS };
 
@@ -57,15 +56,15 @@ async function loadSettings(): Promise<AppSettings> {
                 settings[i] = settings[i].trim();
             }
 
-            if (!globalShortcut.register(settings[i], handleShortcutTriggered)) {
-                console.log("ERROR: [main.ts:applyShortcut()] Shortcut could not be registered");
+            if (settings[i].length > 0 && !globalShortcut.register(settings[i], handleShortcutTriggered)) {
+                console.log("ERROR: [main.ts:loadSettings()] Shortcut could not be registered");
             }
         }
 
         return settings;
     }
     catch (error) {
-        logError("main", "failed to load settings", error);
+        console.log("ERROR: [main.ts:loadSettings()] Shortcut loading catched ", error);
     }
 
     return { ...DEFAULT_SETTINGS };
@@ -282,6 +281,7 @@ function applyShortcut(shortcutKey: keyof AppSettings, shortcut: string): boolea
 
     const newShortcut = shortcut.trim();
     const oldShortcut = appSettings[shortcutKey];
+    console.log("Old shortcut: ", oldShortcut);
 
     if (newShortcut === oldShortcut || newShortcut.length <= 0) {
         console.log("LOG: [main.ts:applyShortcut()] Shortcut has not changed");
@@ -335,7 +335,11 @@ app.on("window-all-closed", () => { });
 
 /* Cleanup of shortcuts */
 app.on("will-quit", () => {
+    console.log("UNREGISTER COMMAND");
+
+    console.log(globalShortcut.isRegistered("CommandOrControl+P"));
     globalShortcut.unregisterAll();
+    console.log(globalShortcut.isRegistered("CommandOrControl+P"));
 });
 
 ipcMain.handle("capture-text", async (): Promise<CaptureResult> => {
@@ -375,12 +379,19 @@ ipcMain.handle("get-settings", async (): Promise<AppSettings> => {
  * TODO: Handle specific shortcut sets
  */
 ipcMain.handle("set-shortcut", async (_event, shortcut: string): Promise<boolean> => {
-    return applyShortcut("screenshotShortcut", shortcut);
+    /* fuck knows why this is important to call */
+    // appSettings = await loadSettings();
+    const ret = applyShortcut("screenshotShortcut", shortcut);
+
+    return ret;
 });
 
 /*
  * TODO: Handle specific shortcut resets
  */
-ipcMain.handle("reset-shortcut", async (): Promise<void> => {
+ipcMain.handle("reset-shortcut", async (): Promise<AppSettings> => {
     appSettings = { ...DEFAULT_SETTINGS };
+    await writeSettings();
+
+    return appSettings;
 });
