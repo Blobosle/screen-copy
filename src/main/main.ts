@@ -392,6 +392,7 @@ ipcMain.handle("set-shortcut", async (_event, shortcut: string): Promise<boolean
 ipcMain.handle("reset-shortcut", async (): Promise<AppSettings> => {
     appSettings = { ...DEFAULT_SETTINGS };
     await writeSettings();
+    await loadSettings();
 
     return appSettings;
 });
