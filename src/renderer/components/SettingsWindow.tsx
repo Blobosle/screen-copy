@@ -33,7 +33,7 @@ export function SettingsWindow(): React.JSX.Element {
 
         void (async () => {
             try {
-                const settings = await window.snapText.getSettings();
+                const settings = await window.screenCopy.getSettings();
 
                 if (!cancelled) {
                     setShortcut(formatAcceleratorForDisplay(settings.screenshotShortcut));
@@ -98,9 +98,9 @@ export function SettingsWindow(): React.JSX.Element {
                 try {
                     const result = await window.screenCopy.setShortcut(accelerator);
 
-                    setShortcut(formatAcceleratorForDisplay(result.shortcut));
+                    setShortcut(formatAcceleratorForDisplay(accelerator.trim()));
 
-                    if (result.status === 'success') {
+                    if (result === true) {
                         setStatus({
                             kind: 'success',
                             message: 'Shortcut updated.'
@@ -110,7 +110,7 @@ export function SettingsWindow(): React.JSX.Element {
 
                     setStatus({
                         kind: 'error',
-                        message: result.message
+                        message: 'Error in updating the shortcut'
                     });
                 } catch (error) {
                     setStatus({

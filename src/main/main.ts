@@ -274,10 +274,10 @@ function handleShortcutTriggered(): void {
 /*
  * Applies a shortcut change for a specified shortcut key
  */
-function applyShortcut(shortcutKey: keyof AppSettings, shortcut: string): void {
+function applyShortcut(shortcutKey: keyof AppSettings, shortcut: string): boolean {
     if (!shortcutKey || !shortcut) {
         console.log("ERROR: [main.ts:applyShortcut()] Argument is null");
-        return;
+        return false;
     }
 
     const newShortcut = shortcut.trim();
@@ -285,18 +285,20 @@ function applyShortcut(shortcutKey: keyof AppSettings, shortcut: string): void {
 
     if (newShortcut === oldShortcut || newShortcut.length <= 0) {
         console.log("LOG: [main.ts:applyShortcut()] Shortcut has not changed");
-        return;
+        return false;
     }
 
     globalShortcut.unregister(oldShortcut);
 
     if (!globalShortcut.register(newShortcut, handleShortcutTriggered)) {
         console.log("ERROR: [main.ts:applyShortcut()] Shortcut could not be registered");
-        return;
+        return false;
     }
 
     appSettings[shortcutKey] = shortcut;
     writeSettings();
+
+    return true;
 }
 
 /* Makes sure there is only one instance of the app */
@@ -363,8 +365,6 @@ ipcMain.handle("get-shortcut", async (): Promise<string | null> => {
  * TODO: Handle multiple shortcuts
  */
 ipcMain.handle("get-settings", async (): Promise<AppSettings> => {
-    log("ipc", "get-settings invoked", { appSettings, registeredShortcut });
-
     return {
         ...appSettings,
         screenshotShortcut: appSettings.screenshotShortcut
@@ -374,8 +374,8 @@ ipcMain.handle("get-settings", async (): Promise<AppSettings> => {
 /*
  * TODO: Handle specific shortcut sets
  */
-ipcMain.handle("set-shortcut", async (_event, shortcut: string): Promise<void> => {
-    applyShortcut("screenshotShortcut", shortcut);
+ipcMain.handle("set-shortcut", async (_event, shortcut: string): Promise<boolean> => {
+    return applyShortcut("screenshotShortcut", shortcut);
 });
 
 /*

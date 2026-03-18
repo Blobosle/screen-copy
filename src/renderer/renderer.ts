@@ -60,7 +60,7 @@ async function startCapture(): Promise<void> {
     setStatus('working', 'Waiting for your screenshot selection...');
 
     try {
-        const result = await window.snapText.captureText();
+        const result = await window.screenCopy.captureText();
         debug('captureText promise resolved', result);
         applyResult(result);
     } catch (error) {
@@ -82,14 +82,14 @@ window.addEventListener('DOMContentLoaded', () => {
     debug('DOMContentLoaded fired');
 });
 
-window.snapText.getShortcut().then((shortcut) => {
+window.screenCopy.getShortcut().then((shortcut) => {
     debug('getShortcut completed', { shortcut });
     shortcutHint.textContent = shortcut
         ? `Global shortcut: ${shortcut}`
         : 'Global shortcut could not be registered, but the button still works.';
 });
 
-window.snapText.onCaptureResult((result) => {
+window.screenCopy.onCaptureResult((result) => {
     debug('capture-result event handler fired', result);
     applyResult(result);
     captureButton.disabled = false;

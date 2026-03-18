@@ -14,7 +14,7 @@ const api = {
         const shortcut = await ipcRenderer.invoke('get-shortcut');
         return shortcut;
     },
-    setShortcut: async (shortcut: string): Promise<void> => {
+    setShortcut: async (shortcut: string): Promise<boolean> => {
         const result = await ipcRenderer.invoke('set-shortcut', shortcut);
         return result;
     },
