@@ -1,6 +1,5 @@
-import React from 'react';
-import { SettingsWindow } from './components/SettingsWindow';
+import { SettingsWindow } from './settings/SettingsWindow';
 
-export function App(): React.JSX.Element {
+export function App() {
     return <SettingsWindow />;
 }
