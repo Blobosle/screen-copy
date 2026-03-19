@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { formatAcceleratorForDisplay } from "../lib/accelerators";
-import { StatusState } from "../../shared/types.ts"
-import { useLoad } from "./hooks/useLoad.ts";
-import { useListener } from "./hooks/useListener.ts";
-import { Sidebar } from "./components/sidebar/Sidebar.tsx";
-import { General } from "./components/general/General.tsx";
+import { formatAcceleratorForDisplay } from "@renderer/lib/accelerators";
+import { StatusState } from "@shared/types"
+import { useLoad } from "@renderer/settings/hooks/useLoad";
+import { useListener } from "@renderer/settings/hooks/useListener";
+import { Sidebar } from "@renderer/settings/components/sidebar/Sidebar";
+import { General } from "@renderer/settings/components/general/General";
 
 export function Settings() {
     const [shortcut, setShortcut] = useState<string>("⌘⇧Y");

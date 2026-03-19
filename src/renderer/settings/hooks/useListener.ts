@@ -1,6 +1,6 @@
-import { useEffect, Dispatch, SetStateAction } from 'react';
-import { StatusState } from '../../../shared/types';
-import { formatAcceleratorForDisplay, keyboardEventToAccelerator } from '../../lib/accelerators';
+import { useEffect, Dispatch, SetStateAction } from "react";
+import { StatusState } from "@shared/types";
+import { formatAcceleratorForDisplay, keyboardEventToAccelerator } from "@renderer/lib/accelerators";
 
 export function useListener(
     isListening: boolean,
@@ -17,11 +17,11 @@ export function useListener(
             event.preventDefault();
             event.stopPropagation();
 
-            if (event.key === 'Escape') {
+            if (event.key === "Escape") {
                 setIsListening(false);
                 setStatus({
-                    kind: 'idle',
-                    message: 'Shortcut change cancelled.'
+                    kind: "idle",
+                    message: "Shortcut change cancelled."
                 });
                 return;
             }
@@ -30,8 +30,8 @@ export function useListener(
 
             if (!accelerator) {
                 setStatus({
-                    kind: 'error',
-                    message: 'Use a letter, number, function key, or arrow key with at least one modifier.'
+                    kind: "error",
+                    message: "Use a letter, number, function key, or arrow key with at least one modifier."
                 });
                 return;
             }
@@ -46,32 +46,32 @@ export function useListener(
 
                     if (result === true) {
                         setStatus({
-                            kind: 'success',
-                            message: 'Shortcut updated.'
+                            kind: "success",
+                            message: "Shortcut updated."
                         });
                         return;
                     }
 
                     setStatus({
-                        kind: 'error',
-                        message: 'Error in updating the shortcut'
+                        kind: "error",
+                        message: "Error in updating the shortcut"
                     });
                 } catch (error) {
                     setStatus({
-                        kind: 'error',
+                        kind: "error",
                         message:
                             error instanceof Error
                                 ? error.message
-                                : 'Could not update the shortcut.'
+                                : "Could not update the shortcut."
                     });
                 }
             })();
         };
 
-        window.addEventListener('keydown', onKeyDown);
+        window.addEventListener("keydown", onKeyDown);
 
         return () => {
-            window.removeEventListener('keydown', onKeyDown);
+            window.removeEventListener("keydown", onKeyDown);
         };
     }, [isListening]);
 }

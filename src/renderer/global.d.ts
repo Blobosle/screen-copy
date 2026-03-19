@@ -1,4 +1,4 @@
-import type { AppSettings, CaptureResult } from '../shared/types';
+import type { AppSettings, CaptureResult } from '@shared/types';
 
 declare global {
     interface Window {

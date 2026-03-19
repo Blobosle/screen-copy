@@ -1,6 +1,6 @@
-import { useEffect, Dispatch, SetStateAction } from 'react';
-import { StatusState } from '../../../shared/types';
-import { formatAcceleratorForDisplay } from '../../lib/accelerators';
+import { useEffect, Dispatch, SetStateAction } from "react";
+import { StatusState } from "../../../shared/types";
+import { formatAcceleratorForDisplay } from "../../lib/accelerators";
 
 export function useLoad(
     setShortcut: Dispatch<SetStateAction<string>>,
@@ -17,18 +17,18 @@ export function useLoad(
                 if (!cancelled) {
                     setShortcut(formatAcceleratorForDisplay(settings.screenshotShortcut));
                     setStatus({
-                        kind: 'idle',
-                        message: 'Click the shortcut field to change it.'
+                        kind: "idle",
+                        message: "Click the shortcut field to change it."
                     });
                 }
             } catch (error) {
                 if (!cancelled) {
                     setStatus({
-                        kind: 'error',
+                        kind: "error",
                         message:
                             error instanceof Error
                                 ? error.message
-                                : 'Could not load the current shortcut.'
+                                : "Could not load the current shortcut."
                     });
                 }
             } finally {

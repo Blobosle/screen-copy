@@ -1,4 +1,4 @@
-import { SidebarItem } from "./SidebarItem";
+import { SidebarItem } from "@renderer/settings/components/sidebar/SidebarItem";
 
 export function Sidebar() {
     return (

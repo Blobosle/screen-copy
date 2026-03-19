@@ -1,3 +1,5 @@
+import { StatusState } from "@shared/types";
+
 export function General({
     shortcut,
     isLoading,
@@ -5,6 +7,13 @@ export function General({
     status,
     onStartListening,
     onReset
+}: {
+    shortcut: string;
+    isLoading: boolean;
+    isListening: boolean;
+    status: StatusState;
+    onStartListening: () => void;
+    onReset: () => void;
 }) {
     return (
         <section className="col-span-3 bg-white px-8 py-7">
