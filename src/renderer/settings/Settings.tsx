@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { formatAcceleratorForDisplay } from "@renderer/lib/accelerators";
 import { StatusState } from "@shared/types"
 import { useLoad } from "@renderer/settings/hooks/useLoad";
@@ -6,10 +6,13 @@ import { useListener } from "@renderer/settings/hooks/useListener";
 import { Sidebar } from "@renderer/settings/components/sidebar/Sidebar";
 import { General } from "@renderer/settings/components/general/General";
 
+type settingTab = "general" | "history";
+
 export function Settings() {
     const [shortcut, setShortcut] = useState<string>("⌘⇧Y");
     const [isLoading, setIsLoading] = useState(true);
     const [isListening, setIsListening] = useState(false);
+    const [isTab, setTab] = useState<settingTab>("general");
     const [status, setStatus] = useState<StatusState>({
         kind: "idle",
         message: "Click the shortcut field to change it."
@@ -45,18 +48,41 @@ export function Settings() {
         })();
     };
 
+    const onTabChange = (newtab: string): void => {
+        setTab(newtab as settingTab);
+    }
+
+    const onTabRender = (): ReactNode => {
+        switch (isTab) {
+            case "general":
+                return <General
+                    shortcut={shortcut}
+                    isLoading={isLoading}
+                    isListening={isListening}
+                    status={status}
+                    onStartListening={onStartListening}
+                    onReset={onReset}
+                />;
+            case "history":
+                break;
+            default:
+                console.log("LOG: [Settings.tsx:onTabChange] Default on tab switch reached");
+                return <General
+                    shortcut={shortcut}
+                    isLoading={isLoading}
+                    isListening={isListening}
+                    status={status}
+                    onStartListening={onStartListening}
+                    onReset={onReset}
+                />;
+        }
+    }
+
     return (
         <main className="grid h-screen grid-cols-4">
-            <Sidebar />
+            <Sidebar onTabChange={onTabChange} />
 
-            <General
-                shortcut={shortcut}
-                isLoading={isLoading}
-                isListening={isListening}
-                status={status}
-                onStartListening={onStartListening}
-                onReset={onReset}
-            />
+            {onTabRender()}
         </main >
     );
 }
