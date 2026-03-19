@@ -5,6 +5,7 @@ import { useLoad } from "@renderer/settings/hooks/useLoad";
 import { useListener } from "@renderer/settings/hooks/useListener";
 import { Sidebar } from "@renderer/settings/components/sidebar/Sidebar";
 import { General } from "@renderer/settings/components/general/General";
+import { History } from "@renderer/settings/components/history/History";
 
 type settingTab = "general" | "history";
 
@@ -64,7 +65,7 @@ export function Settings() {
                     onReset={onReset}
                 />;
             case "history":
-                break;
+                return <History />
             default:
                 console.log("LOG: [Settings.tsx:onTabChange] Default on tab switch reached");
                 return <General
