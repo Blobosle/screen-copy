@@ -1,12 +1,10 @@
-import { StatusState } from "../../../../shared/types";
-
-export function General(args: {
-    shortcut: string,
-    isLoading: boolean,
-    isListening: boolean,
-    status: StatusState,
-    onStartListening: () => void,
-    onReset: () => void
+export function General({
+    shortcut,
+    isLoading,
+    isListening,
+    status,
+    onStartListening,
+    onReset
 }) {
     return (
         <section className="col-span-3 bg-white px-8 py-7">
@@ -25,16 +23,16 @@ export function General(args: {
                 </p>
 
                 <button
-                    onClick={args.onStartListening}
+                    onClick={onStartListening}
                     className={
                         "rounded-[4px] border border-black/15 px-3 py-1.5 text-[12px] font-regular text-black hover:border-black"
                     }
                 >
-                    {args.isLoading ? "" : args.isListening ? "Type a shortcut" : args.shortcut}
+                    {isLoading ? "" : isListening ? "Type a shortcut" : shortcut}
                 </button>
 
                 <button
-                    onClick={args.onReset}
+                    onClick={onReset}
                     className={
                         "rounded-[4px] border border-black/15 px-3 py-1.5 text-[12px] font-regular text-black hover:border-black"
                     }
@@ -46,14 +44,14 @@ export function General(args: {
             <p
                 className={[
                     "mt-3 text-[12px]",
-                    args.status.kind === "error"
+                    status.kind === "error"
                         ? "text-red-600"
-                        : args.status.kind === "success"
+                        : status.kind === "success"
                             ? "text-neutral-700"
                             : "text-neutral-500"
                 ].join(" ")}
             >
-                {args.status.message}
+                {status.message}
             </p>
         </section>
     );

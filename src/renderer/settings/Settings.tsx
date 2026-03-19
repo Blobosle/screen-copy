@@ -3,7 +3,7 @@ import { formatAcceleratorForDisplay } from "../lib/accelerators";
 import { StatusState } from "../../shared/types.ts"
 import { useLoad } from "./hooks/useLoad.ts";
 import { useListener } from "./hooks/useListener.ts";
-import { Sidebar } from "./components/Sidebar/Sidebar.tsx";
+import { Sidebar } from "./components/sidebar/Sidebar.tsx";
 import { General } from "./components/general/General.tsx";
 
 export function Settings() {

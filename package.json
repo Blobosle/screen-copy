@@ -13,7 +13,7 @@
         "build:renderer": "node ./scripts/build-renderer.mjs",
         "build:swift": "node ./scripts/build-swift-helper.mjs",
         "build": "npm run clean && npm run build:ts && npm run build:swift && npm run build:style && npm run build:renderer",
-        "dev": "npm run build && electron . 2>&1 | tee snaptext-dev.log",
+        "dev": "npm run build && electron . 2>&1",
         "watch": "npm run dev && npm run build:style:watch",
         "dist": "npm run build && electron-builder --mac dmg zip"
     },
