@@ -3,19 +3,7 @@ import { formatAcceleratorForDisplay } from '../lib/accelerators';
 import { StatusState } from "../../shared/types.ts"
 import { useLoad } from './hooks/useLoad.ts';
 import { useListener } from './hooks/useListener.ts';
-
-function SidebarItem(props: { label: string; active?: boolean }) {
-    return (
-        <div
-            className={[
-                'rounded-[6px] px-2.5 py-1.5 text-[12px] font-medium',
-                props.active ? 'bg-black/[0.06] text-neutral-900' : 'text-neutral-500'
-            ].join(' ')}
-        >
-            {props.label}
-        </div>
-    );
-}
+import { SidebarItem } from './components/SidebarItem.tsx';
 
 export function Settings() {
     const [shortcut, setShortcut] = useState<string>('⌘⇧Y');
@@ -69,6 +57,7 @@ export function Settings() {
 
                     <nav className="space-y-1">
                         <SidebarItem label="General" active />
+                        <SidebarItem label="History" />
                     </nav>
                 </aside>
 
