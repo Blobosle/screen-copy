@@ -15,3 +15,9 @@ export interface AppSettings {
     screenshotShortcut: string;
     imageShortcut: string;
 }
+
+export type StatusState =
+    | { kind: 'idle'; message: string }
+    | { kind: 'success'; message: string }
+    | { kind: 'error'; message: string };
+

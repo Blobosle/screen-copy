@@ -4,7 +4,7 @@ import { cpSync, mkdirSync } from 'node:fs';
 mkdirSync('dist/renderer', { recursive: true });
 
 await build({
-    entryPoints: ['src/renderer/main.tsx'],
+    entryPoints: ['src/renderer/App.tsx'],
     bundle: true,
     outfile: 'dist/renderer/renderer.js',
     platform: 'browser',

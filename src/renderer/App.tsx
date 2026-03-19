@@ -1,5 +1,15 @@
-import { SettingsWindow } from './settings/SettingsWindow';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { Settings } from './settings/Settings';
 
-export function App() {
-    return <SettingsWindow />;
+const rootElement = document.getElementById('root');
+
+if (!rootElement) {
+    throw new Error('Missing #root element');
 }
+
+createRoot(rootElement).render(
+    <StrictMode>
+        <Settings />
+    </StrictMode>
+);
