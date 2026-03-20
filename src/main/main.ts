@@ -14,7 +14,7 @@ import {
 } from "electron";
 import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from "./screenshot.js";
 import { recognizeTextFromImage } from "./ocr.js";
-import { addHistoryEntry, getHistory, initHistory } from "./history.js";
+import { addHistoryEntry, clearHistory, getHistory, initHistory } from "./history.js";
 import type { AppSettings, CaptureResult, HistoryRecord } from "../shared/types.js";
 
 const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Y";
@@ -371,6 +371,14 @@ ipcMain.handle("set-shortcut", async (_event, shortcut: string): Promise<boolean
     const ret = applyShortcut("screenshotShortcut", shortcut);
 
     return ret;
+});
+
+/*
+ * IPC to reset the history
+ */
+ipcMain.handle("clear-history", async (): Promise<HistoryRecord> => {
+    await clearHistory();
+    return { history: [] } as HistoryRecord;
 });
 
 /*

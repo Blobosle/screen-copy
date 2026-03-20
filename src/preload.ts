@@ -26,6 +26,10 @@ const api = {
         const result = await ipcRenderer.invoke("reset-shortcut");
         return result;
     },
+    clearHistory: async (): Promise<HistoryRecord> => {
+        const result = await ipcRenderer.invoke("clear-history");
+        return result;
+    },
     onCaptureResult: (listener: (result: CaptureResult) => void): void => {
         ipcRenderer.on("capture-result", (_event, result: CaptureResult) => {
             listener(result);
