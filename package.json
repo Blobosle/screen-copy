@@ -1,6 +1,6 @@
 {
     "name": "ScreenCopy",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "description": "Copy text from a screenshot",
     "main": "dist/main/main.js",
     "author": "Blobosle",
