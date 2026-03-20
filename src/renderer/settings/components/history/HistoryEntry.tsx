@@ -1,5 +1,4 @@
 import { Copy } from "lucide-react";
-import { useHistory } from "@renderer/settings/hooks/useHistory";
 
 export function HistoryEntry(prop: { entry: string }) {
     const onCopy = async () => {
