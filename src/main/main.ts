@@ -14,7 +14,8 @@ import {
 } from "electron";
 import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from "./screenshot.js";
 import { recognizeTextFromImage } from "./ocr.js";
-import type { AppSettings, CaptureResult } from "../shared/types.js";
+import { addHistoryEntry, getHistory, initHistory } from "./history.js";
+import type { AppSettings, CaptureResult, HistoryRecord } from "../shared/types.js";
 
 const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Y";
 const DEFAULT_SETTINGS: AppSettings = {
@@ -205,6 +206,7 @@ async function runCaptureFlow(): Promise<CaptureResult> {
             }
 
             clipboard.writeText(text);
+            await addHistoryEntry(text)
 
             return {
                 status: "success",
@@ -299,6 +301,7 @@ app.on("second-instance", () => {
 app.whenReady().then(async () => {
     /* Load settings are the bindings set previously by the user */
     appSettings = await loadSettings();
+    await initHistory();
     /* Load tray icon */
     initTray();
 
@@ -350,6 +353,13 @@ ipcMain.handle("get-settings", async (): Promise<AppSettings> => {
         ...appSettings,
         screenshotShortcut: appSettings.screenshotShortcut
     };
+});
+
+/*
+ * IPC for getting a snapshot of the current history entries in memory
+ */
+ipcMain.handle("get-history", async (): Promise<HistoryRecord> => {
+    return await getHistory();
 });
 
 /*

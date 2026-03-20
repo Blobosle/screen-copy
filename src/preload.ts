@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { AppSettings, CaptureResult } from "@shared/types.js";
+import type { AppSettings, CaptureResult, HistoryRecord } from "@shared/types.js";
 
 const api = {
     captureText: async (): Promise<CaptureResult> => {
@@ -13,6 +13,10 @@ const api = {
     getShortcut: async (): Promise<string | null> => {
         const shortcut = await ipcRenderer.invoke("get-shortcut");
         return shortcut;
+    },
+    getHistory: async (): Promise<HistoryRecord> => {
+        const history = await ipcRenderer.invoke("get-history");
+        return history;
     },
     setShortcut: async (shortcut: string): Promise<boolean> => {
         const result = await ipcRenderer.invoke("set-shortcut", shortcut);
