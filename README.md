@@ -1,5 +1,5 @@
 <div align = center>
-<img width="200" height="200" alt="mac1024" src="https://github.com/user-attachments/assets/98bcb9b7-3643-45a8-85eb-a47876120ec3" />
+  <img width="200" height="200" alt="mac1024" src="https://github.com/user-attachments/assets/5d4f0640-1101-4122-8583-763d6369a8db" />
 </div>
 
   <div align = center>
@@ -39,28 +39,3 @@ System Settings → Privacy & Security → Screen & System Audio Recording
 ```
 
 Then reopen the app.
-
-## Stack
-
-- Electron + TypeScript + React for the desktop app shell
-- Native macOS `screencapture` for the interactive region selection
-- A Swift helper using Apple's Vision framework for OCR
-
-## Requirements
-
-- macOS
-- Xcode Command Line Tools installed
-- Node.js and npm
-
-Install Command Line Tools if needed:
-
-```bash
-xcode-select --install
-```
-
-For building the application for development:
-
-```bash
-npm install
-npm run dev
-```
