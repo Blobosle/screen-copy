@@ -39,7 +39,8 @@
             "target": [
                 "zip",
                 "dmg"
-            ]
+            ],
+            "icon": "assets/icons/icon.icns"
         }
     },
     "devDependencies": {
