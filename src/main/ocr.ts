@@ -1,21 +1,20 @@
-import { execFile } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import path from 'node:path';
-import { promisify } from 'node:util';
+import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
-function getHelperPath(): string {
-    const devPath = path.resolve(process.cwd(), 'build/native/ocr-helper');
-    if (existsSync(devPath)) {
-        return devPath;
+/*
+ * Finds the path to the ocr swift helper and it obtains the output
+ */
+export async function recognizeTextFromImage(filePath: string): Promise<string> {
+    let helperPath = path.resolve(process.cwd(), "build/native/ocr-helper");
+
+    if (!existsSync(helperPath)) {
+        helperPath = path.join(process.resourcesPath, "ocr-helper");
     }
 
-    return path.join(process.resourcesPath, 'ocr-helper');
-}
-
-export async function recognizeTextFromImage(filePath: string): Promise<string> {
-    const helperPath = getHelperPath();
     const { stdout, stderr } = await execFileAsync(helperPath, [filePath]);
 
     if (stderr.trim()) {

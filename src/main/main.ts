@@ -163,31 +163,26 @@ async function showSettingsWindow(): Promise<void> {
     mainWindow.show();
 }
 
-function broadcastCaptureResult(result: CaptureResult): void {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send("capture-result", result);
-    }
-}
-
-function getScreenAccessStatus(): string {
-    const status = systemPreferences.getMediaAccessStatus("screen");
-    return status;
-}
-
+/*
+ * Runs screenshot and OCR, returning either the text copied to clipboard or
+ * error state
+ */
 async function runCaptureFlow(): Promise<CaptureResult> {
     if (captureInFlight) {
         return captureInFlight;
     }
 
-    captureInFlight = (async () => {
-        const accessStatus = getScreenAccessStatus();
+    captureInFlight = (async (): Promise<CaptureResult> => {
+        const accessStatus = systemPreferences.getMediaAccessStatus("screen");
 
         if (accessStatus === "denied" || accessStatus === "restricted") {
             return {
                 status: "error",
                 message:
-                    "Screen Recording access is blocked for ScreenCopy. Open System Settings → Privacy & Security → Screen & System Audio Recording, allow the app, then reopen it."
-            } satisfies CaptureResult;
+                    "Screen Recording access is blocked for ScreenCopy. " +
+                    "Open System Settings → Privacy & Security → Allow applications " +
+                    "to record your screen, allow the app, then reopen it."
+            };
         }
 
         let screenshotPath: string | null = null;
@@ -197,14 +192,16 @@ async function runCaptureFlow(): Promise<CaptureResult> {
                 mainWindow.hide();
             }
 
+            /* Screenshot + OCR */
             screenshotPath = await captureInteractiveScreenshot();
             const text = await recognizeTextFromImage(screenshotPath);
 
             if (!text) {
                 return {
                     status: "error",
-                    message: "No text or QR code was detected in the selected area."
-                } satisfies CaptureResult;
+                    message: "No text or QR code was detected " +
+                        "in the selected area."
+                };
             }
 
             clipboard.writeText(text);
@@ -212,19 +209,22 @@ async function runCaptureFlow(): Promise<CaptureResult> {
             return {
                 status: "success",
                 text
-            } satisfies CaptureResult;
-        } catch (error) {
+            };
+        }
+        catch (error) {
             if (error instanceof ScreenshotCancelledError) {
                 return { status: "cancelled" } satisfies CaptureResult;
             }
 
-            const message = error instanceof Error ? error.message : "Unexpected OCR error.";
+            const message = error instanceof Error ? error.message :
+                "Unexpected OCR error.";
 
             return {
                 status: "error",
                 message
-            } satisfies CaptureResult;
-        } finally {
+            };
+        }
+        finally {
             if (screenshotPath) {
                 await deleteIfExists(screenshotPath);
             }
@@ -233,13 +233,17 @@ async function runCaptureFlow(): Promise<CaptureResult> {
 
     const result = await captureInFlight;
     captureInFlight = null;
-    broadcastCaptureResult(result);
     return result;
 }
 
+/*
+ * Callback to handle screenshot copy shortcut command
+ */
 function handleShortcutTriggered(): void {
     void runCaptureFlow().then(async (result) => {
         if (result.status === "error" && (!mainWindow || !mainWindow.isFocused())) {
+            console.log("ERROR: [main.ts:handleShortcutTriggered] Result status returned an error");
+
             await dialog.showMessageBox({
                 type: "error",
                 title: "ScreenCopy",

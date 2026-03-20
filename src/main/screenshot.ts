@@ -5,8 +5,12 @@ import path from 'node:path';
 import { execFile, ExecFileException } from 'node:child_process';
 import { promisify } from 'node:util';
 
+/* Make the callback execFile a promise */
 const execFileAsync = promisify(execFile);
 
+/*
+ * Custom error handling for cancelled screenshot
+ */
 export class ScreenshotCancelledError extends Error {
     constructor() {
         super('Screenshot capture was cancelled.');
@@ -14,16 +18,16 @@ export class ScreenshotCancelledError extends Error {
     }
 }
 
+/*
+ * Capture handler that stores screenshot taken in tmp
+ */
 export async function captureInteractiveScreenshot(): Promise<string> {
     const filePath = path.join(os.tmpdir(), `screencopy-${randomUUID()}.png`);
 
     try {
-        const result = await execFileAsync('screencapture', ['-i', '-x', filePath]);
+        await execFileAsync('screencapture', ['-i', '-x', filePath]);
 
-        const stats = await fs.stat(filePath).catch((error) => {
-            console.log("ERROR: [screenshot.ts: captureInteractiveScreenshot()] Failed to stat screenshot file after capture", error);
-            return null;
-        });
+        const stats = await fs.stat(filePath);
 
         if (!stats || stats.size === 0) {
             console.log("ERROR: [screenshot.ts: captureInteractiveScreenshot()] capture treated as cancelled because file was missing or empty");
@@ -33,9 +37,8 @@ export async function captureInteractiveScreenshot(): Promise<string> {
         return filePath;
     } catch (error) {
         console.log("ERROR: [screenshot.ts: captureInteractiveScreenshot()] Screenshot capture was catched", error);
-        await fs.rm(filePath, { force: true }).catch((rmError) => {
-            console.log("ERROR: [screenshot.ts: captureInteractiveScreenshot()] Failed to remove temporary screenshot after error", rmError);
-        });
+
+        await deleteIfExists(filePath);
 
         const maybeExecError = error as ExecFileException | undefined;
         if (maybeExecError?.code === 1 || maybeExecError?.signal === 'SIGTERM') {
@@ -47,6 +50,9 @@ export async function captureInteractiveScreenshot(): Promise<string> {
     }
 }
 
+/*
+ * Deletion helper function for removing temporary failed screenshots
+ */
 export async function deleteIfExists(filePath: string): Promise<void> {
     await fs.rm(filePath, { force: true }).catch((error) => {
         console.log("ERROR: [screenshot.ts: deleteIfExists()] Failed to delete temporary file", error);

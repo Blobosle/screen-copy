@@ -30,6 +30,9 @@ export function Settings() {
         });
     };
 
+    /*
+     * TODO: Add scalability for more than the screenshot shortcut
+     */
     const onReset = (): void => {
         setIsListening(false);
 
