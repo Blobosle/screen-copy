@@ -56,7 +56,7 @@ async function loadSettings(): Promise<AppSettings> {
             }
 
             if (settings[i].length > 0 && !globalShortcut.register(settings[i], handleShortcutTriggered)) {
-                console.log("ERROR: [main.ts:loadSettings()] Shortcut could not be registered");
+                console.log("EXCEPTION: [main.ts:loadSettings()] Shortcut could not be registered");
             }
         }
 
