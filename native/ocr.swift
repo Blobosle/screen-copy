@@ -116,14 +116,37 @@ func recognizeText(from image: CGImage) throws -> String {
         lines.append(OCRLine(tokens: [token], midY: token.midY, averageHeight: token.height))
     }
 
-    return lines
-        .map { line in
-            line.tokens
-                .sorted { $0.minX < $1.minX }
-                .map(\.text)
-                .joined(separator: " ")
+    let sortedLines = lines.sorted { $0.midY > $1.midY }
+
+    var paragraphs: [String] = []
+    var previousLine: OCRLine? = nil
+
+    for line in sortedLines {
+        let text = line.tokens
+            .sorted { $0.minX < $1.minX }
+            .map(\.text)
+            .joined(separator: " ")
+
+        guard let previous = previousLine else {
+            paragraphs.append(text)
+            previousLine = line
+            continue
         }
-        .joined(separator: "\n")
+
+        let gap = previous.midY - line.midY
+        let paragraphBreakThreshold = max(previous.averageHeight, line.averageHeight) * 1.5
+
+        if gap > paragraphBreakThreshold {
+            paragraphs.append(text)
+        } else {
+            paragraphs[paragraphs.count - 1] += " " + text
+        }
+
+        previousLine = line
+    }
+
+    return paragraphs
+        .joined(separator: "\n\n")
         .trimmingCharacters(in: .whitespacesAndNewlines)
 }
 
