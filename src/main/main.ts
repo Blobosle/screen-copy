@@ -90,9 +90,9 @@ function initTray(): void {
         return;
     }
 
-    tray = new Tray(nativeImage.createEmpty());
+    tray = new Tray(nativeImage.createFromPath(path.join(app.getAppPath(), "assets", "icons", "logoTray.png")));
 
-    tray.setTitle("SC");
+    // tray.setTitle("SC");
     tray.setToolTip("ScreenCopy");
 
     const contextMenu = Menu.buildFromTemplate([
