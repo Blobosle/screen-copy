@@ -1,5 +1,5 @@
 <div align = center>
-    <img width="200" height="200" alt="mac1024" src="https://github.com/user-attachments/assets/5d4f0640-1101-4122-8583-763d6369a8db" />
+    <img width="200" height="200" src="https://github.com/user-attachments/assets/5d4f0640-1101-4122-8583-763d6369a8db" />
 </div>
 
 <div align = center>
