@@ -36,13 +36,17 @@ export async function captureInteractiveScreenshot(): Promise<string> {
 
         return filePath;
     } catch (error) {
-        console.log("ERROR: [screenshot.ts: captureInteractiveScreenshot()] Screenshot capture was catched", error);
+        console.log("LOG: [screenshot.ts: captureInteractiveScreenshot()] Screenshot capture was catched", error);
 
         await deleteIfExists(filePath);
 
         const maybeExecError = error as ExecFileException | undefined;
         if (maybeExecError?.code === 1 || maybeExecError?.signal === 'SIGTERM') {
             console.log("ERROR: [screenshot.ts: captureInteractiveScreenshot()] Mapping execFile failure to ScreenshotCancelledError");
+            throw new ScreenshotCancelledError();
+        }
+
+        if (maybeExecError?.code === 'ENOENT') {
             throw new ScreenshotCancelledError();
         }
 
