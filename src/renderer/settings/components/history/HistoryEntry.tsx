@@ -11,7 +11,9 @@ export function HistoryEntry(prop: { entry: string }) {
                 {prop.entry}
             </p>
 
-            <button className="flex items-center justify-center rounded-4xl h-9 w-9 shrink-0 hover:bg-black/5 cursor-pointer" onClick={onCopy}>
+            <button
+                className="flex items-center justify-center rounded-4xl h-9 w-9 shrink-0 hover:bg-black/5 cursor-pointer active:scale-90 transition-transform duration-100"
+                onClick={onCopy}>
                 <Copy size={20} />
             </button>
         </div>
