@@ -13,7 +13,7 @@ import {
     systemPreferences
 } from "electron";
 import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from "./screenshot.js";
-import { recognizeLatexfromImage, recognizeTextFromImage } from "./ocr.js";
+import { recognizeTextFromImage } from "./ocr.js";
 import { addHistoryEntry, clearHistory, getHistory, initHistory } from "./history.js";
 import type { AppSettings, CaptureResult, HistoryRecord } from "../shared/types.js";
 
@@ -30,7 +30,7 @@ const PRELOAD_PATH = path.join(__dirname, "../preload.js");
 const RENDERER_PATH = path.join(__dirname, "../renderer/index.html");
 
 /* State variables */
-let mainWindow: BrowserWindow | null = null;
+export let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let captureInFlight: Promise<CaptureResult> | null = null;
 let appSettings: AppSettings = { ...DEFAULT_SETTINGS };
@@ -195,7 +195,7 @@ async function runCaptureFlow(): Promise<CaptureResult> {
 
             /* Screenshot + OCR */
             screenshotPath = await captureInteractiveScreenshot();
-            const text = await recognizeLatexfromImage(screenshotPath);
+            const text = await recognizeTextFromImage(screenshotPath);
 
             if (!text) {
                 return {
