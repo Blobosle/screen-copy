@@ -5,6 +5,7 @@ build/
 release/
 snaptext-dev.log
 *.log
+latex-ocr-helper.spec
 
 .DS_Store
 TODO

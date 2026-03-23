@@ -23,7 +23,8 @@
         "productName": "ScreenCopy",
         "files": [
             "dist/**/*",
-            "package.json"
+            "package.json",
+            "assets/**/*"
         ],
         "asar": true,
         "directories": {
