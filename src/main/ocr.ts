@@ -5,6 +5,9 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
+let latexAbortController: AbortController | null = null;
+export let isAborted: boolean = false;
+
 /*
  * Finds the path to the ocr swift helper and it obtains the output
  */
@@ -30,7 +33,15 @@ export async function recognizeTextFromImage(filePath: string): Promise<string> 
 export async function recognizeLatexfromImage(filePath: string): Promise<string> {
     const modelPath = path.join(process.cwd(), "dist/latex-ocr-helper/latex-ocr-helper");
 
-    const { stdout } = await execFileAsync(modelPath, [filePath]);
+    const controller = new AbortController();
+    latexAbortController = controller;
+
+
+    const { stdout } = await execFileAsync(modelPath, [filePath], { signal: controller.signal });
+
+    if (latexAbortController === controller) {
+        latexAbortController = null;
+    }
 
     /* The issue is that a version diff warning messes up copy command */
     // if (stderr.trim()) {
@@ -38,4 +49,19 @@ export async function recognizeLatexfromImage(filePath: string): Promise<string>
     // }
 
     return stdout.trim();
+}
+
+/*
+ * Callback to abort the latex model processing
+ */
+export function abortRecognizeLatex(): void {
+    latexAbortController?.abort();
+    isAborted = true;
+}
+
+/*
+ * Function to set the aborted flag externally
+ */
+export function setAbortFalse() {
+    isAborted = false;
 }

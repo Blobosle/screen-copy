@@ -35,7 +35,7 @@ const RENDERER_PATH = path.join(__dirname, "../renderer/index.html");
 export let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let captureInFlight: Promise<CaptureResult> | null = null;
-let appSettings: AppSettings = { ...DEFAULT_SETTINGS };
+export let appSettings: AppSettings = { ...DEFAULT_SETTINGS };
 
 if (process.platform === "darwin") {
     app.setActivationPolicy("accessory");
@@ -77,8 +77,6 @@ async function loadSettings(): Promise<AppSettings> {
             else {
                 settings[i] = settings[i].trim();
             }
-
-            console.log("LOG settings: ", i, settings[i]);
 
             if (settings[i].length > 0 && !globalShortcut.register(settings[i], shortcutRouter(settings[i]))) {
                 console.log("EXCEPTION: [main.ts:loadSettings()] Shortcut could not be registered", i, settings[i]);

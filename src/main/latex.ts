@@ -2,12 +2,13 @@ import { CaptureResult } from "@shared/types";
 import {
     clipboard,
     systemPreferences,
-    dialog,
+    globalShortcut,
 } from "electron";
 import { addHistoryEntry } from "./history";
-import { recognizeLatexfromImage } from "./ocr";
+import { abortRecognizeLatex, isAborted, recognizeLatexfromImage, setAbortFalse } from "./ocr";
 import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from "./screenshot.js";
 import { mainWindow } from "./main";
+import { appSettings } from "./main";
 
 let latexInFlight: Promise<CaptureResult> | null = null;
 
@@ -42,7 +43,14 @@ export async function runLatexFlow(): Promise<CaptureResult> {
 
             /* Screenshot + OCR */
             screenshotPath = await captureInteractiveScreenshot();
+
+            globalShortcut.unregister(appSettings.latexShortcut);
+            globalShortcut.register(appSettings.latexShortcut, abortRecognizeLatex);
+
             const text = await recognizeLatexfromImage(screenshotPath);
+
+            globalShortcut.unregister(appSettings.latexShortcut);
+            globalShortcut.register(appSettings.latexShortcut, handleLatexTriggered);
 
             if (!text) {
                 return {
@@ -81,7 +89,9 @@ export async function runLatexFlow(): Promise<CaptureResult> {
     })();
 
     const result = await latexInFlight;
+
     latexInFlight = null;
+
     return result;
 }
 
@@ -92,6 +102,14 @@ export function handleLatexTriggered(): void {
     void runLatexFlow().then(async (result) => {
         if (result.status === "error" && (!mainWindow || !mainWindow.isFocused())) {
             console.log("ERROR: [main.ts:handleLatexTriggered] Result status returned an error", result.message);
+            if (isAborted) {
+                globalShortcut.unregister(appSettings.latexShortcut);
+                globalShortcut.register(appSettings.latexShortcut, handleLatexTriggered);
+
+                setAbortFalse();
+                handleLatexTriggered();
+            }
         }
     });
+
 }
