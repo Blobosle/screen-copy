@@ -20,6 +20,9 @@ ScreenCopy allows you to copy text, Latex formulas, and QR codes through taking 
 
 </div>
 
+https://github.com/user-attachments/assets/ff1211b6-0203-4766-8a64-74ebe0bf90c4
+
+
 ## Requirement for Installation
 
 Given the application is not signed on macOS, when attempting to open the app for the first time you may be unable to do so.
