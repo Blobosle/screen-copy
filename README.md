@@ -16,7 +16,7 @@
 
 # ScreenCopy
 
-ScreenCopy allows you to copy text, Latex formulas, and QR codes through taking screenshots on macOS. The application will run OCR on the captured images, delete them, and copy the recognized text/QR code to the clipboard.
+ScreenCopy allows you to copy text, Latex formulas, and QR codes through taking screenshots on macOS saving recognized elements to the clipboard.
 
 </div>
 
