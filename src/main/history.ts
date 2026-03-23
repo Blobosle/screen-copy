@@ -16,9 +16,16 @@ async function loadHistory(): Promise<HistoryRecord> {
     try {
         const raw = await fs.readFile(HISTORY_PATH, "utf8");
         const parsed = JSON.parse(raw) as Partial<HistoryRecord>;
-        const history: HistoryRecord = { ...{ history: [] }, ...parsed };
 
-        return history;
+        return {
+            history: Array.isArray(parsed.history)
+                ? parsed.history.filter(
+                    (item): item is { value: string; isLatex: boolean } =>
+                        typeof item?.value === "string" &&
+                        typeof item?.isLatex === "boolean"
+                )
+                : []
+        };
     }
     catch (error) {
         console.log("ERROR: [history.ts:loadHistory] History failed and catched", error);
@@ -43,12 +50,12 @@ async function writeHistory(): Promise<void> {
  * Handler for adding a new entry into the history
  * Entries are capped at 10
  */
-export async function addHistoryEntry(entry: string): Promise<void> {
+export async function addHistoryEntry(value: string, isLatex: boolean): Promise<void> {
     appHistory = await loadHistory();
 
     appHistory.history = [
-        entry,
-        ...appHistory.history.filter(item => item !== entry)
+        { value, isLatex },
+        ...appHistory.history.filter((item) => !(item.value === value && item.isLatex === isLatex))
     ].slice(0, 10);
 
     await writeHistory();

@@ -13,6 +13,11 @@ export type StatusState =
     | { kind: 'success'; message: string }
     | { kind: 'error'; message: string };
 
+export interface HistoryEntry {
+    value: string;
+    isLatex: boolean;
+}
+
 export interface HistoryRecord {
-    history: string[];
+    history: HistoryEntry[];
 };

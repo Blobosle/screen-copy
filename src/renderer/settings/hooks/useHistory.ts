@@ -1,7 +1,8 @@
+import { HistoryRecord } from "@shared/types";
 import { useEffect, Dispatch, SetStateAction } from "react";
 
 export function useHistory(
-    setEntry: Dispatch<SetStateAction<string[]>>,
+    setEntry: Dispatch<SetStateAction<HistoryRecord>>,
     setClear: Dispatch<SetStateAction<boolean>>,
     clear: boolean
 ): void {
@@ -13,11 +14,11 @@ export function useHistory(
             const ret = await window.screenCopy.getHistory();
 
             if (!cancelled) {
-                setEntry(ret.history);
+                setEntry(ret);
             }
 
             unsubscribe = window.screenCopy.onHistoryUpdated((history) => {
-                setEntry(history.history);
+                setEntry(history);
             });
         })();
 
@@ -40,7 +41,7 @@ export function useHistory(
             const ret = await window.screenCopy.clearHistory();
 
             if (!cancelled) {
-                setEntry(ret.history);
+                setEntry(ret);
             }
         })();
 

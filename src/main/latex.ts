@@ -61,7 +61,7 @@ export async function runLatexFlow(): Promise<CaptureResult> {
             }
 
             clipboard.writeText(text);
-            await addHistoryEntry(text)
+            await addHistoryEntry(text, true)
 
             const history = await getHistory();
             emitUpdatedHistory(history);

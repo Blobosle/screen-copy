@@ -228,7 +228,7 @@ async function runCaptureFlow(): Promise<CaptureResult> {
             }
 
             clipboard.writeText(text);
-            await addHistoryEntry(text)
+            await addHistoryEntry(text, false)
 
             const history = await getHistory();
             emitUpdatedHistory(history);
