@@ -31,7 +31,11 @@ export async function recognizeTextFromImage(filePath: string): Promise<string> 
  * Finds the path to the model and gets the output
  */
 export async function recognizeLatexfromImage(filePath: string): Promise<string> {
-    const modelPath = path.join(process.cwd(), "dist/latex-ocr-helper/latex-ocr-helper");
+    let modelPath = path.resolve(process.cwd(), "dist/latex-ocr-helper/latex-ocr-helper");
+
+    if (!existsSync(modelPath)) {
+        modelPath = path.join(process.resourcesPath, "latex-ocr-helper", "latex-ocr-helper");
+    }
 
     const controller = new AbortController();
     latexAbortController = controller;
