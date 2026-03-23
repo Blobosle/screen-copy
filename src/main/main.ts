@@ -399,10 +399,10 @@ ipcMain.handle("clear-history", async (): Promise<HistoryRecord> => {
 });
 
 /*
- * TODO: Handle specific shortcut resets
+ * Given a shortcut it resets to default
  */
-ipcMain.handle("reset-shortcut", async (): Promise<AppSettings> => {
-    appSettings = { ...DEFAULT_SETTINGS };
+ipcMain.handle("reset-shortcut", async (_event, shortcutType: string): Promise<AppSettings> => {
+    appSettings[shortcutType as keyof AppSettings] = DEFAULT_SETTINGS[shortcutType as keyof AppSettings];
     await writeSettings();
     await loadSettings();
 

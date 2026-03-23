@@ -18,12 +18,12 @@ const api = {
         const history = await ipcRenderer.invoke("get-history");
         return history;
     },
-    setShortcut: async (shortcut: string): Promise<boolean> => {
-        const result = await ipcRenderer.invoke("set-shortcut", shortcut);
+    setShortcut: async (shortcutType: string, shortcut: string): Promise<boolean> => {
+        const result = await ipcRenderer.invoke("set-shortcut", shortcutType, shortcut);
         return result;
     },
-    resetShortcut: async (): Promise<AppSettings> => {
-        const result = await ipcRenderer.invoke("reset-shortcut");
+    resetShortcut: async (shortcutType: string): Promise<AppSettings> => {
+        const result = await ipcRenderer.invoke("reset-shortcut", shortcutType);
         return result;
     },
     clearHistory: async (): Promise<HistoryRecord> => {

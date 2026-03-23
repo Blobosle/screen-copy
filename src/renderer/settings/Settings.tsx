@@ -35,15 +35,12 @@ export function Settings() {
         });
     };
 
-    /*
-     * TODO: Add scalability for more than the screenshot shortcut
-     */
-    const onReset = (): void => {
+    const onReset = (shortcutType: string): void => {
         setIsListening(false);
 
         void (async () => {
             try {
-                const result = await window.screenCopy.resetShortcut();
+                const result = await window.screenCopy.resetShortcut(shortcutType);
 
                 setShortcut((prev) => ({
                     ...prev,

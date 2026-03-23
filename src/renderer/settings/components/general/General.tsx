@@ -14,7 +14,7 @@ export function General({
     isListening: boolean;
     status: StatusState;
     onStartListening: (arg: string) => void;
-    onReset: () => void;
+    onReset: (arg: string) => void;
     skey: string,
 }) {
     return (
@@ -43,7 +43,7 @@ export function General({
                 </button>
 
                 <button
-                    onClick={onReset}
+                    onClick={() => onReset("screenshotShortcut")}
                     className={
                         "rounded-[4px] border border-black/15 px-3 py-1.5 text-[12px] font-regular text-black hover:border-black"
                     }
@@ -67,7 +67,7 @@ export function General({
                 </button>
 
                 <button
-                    onClick={onReset}
+                    onClick={() => onReset("latexShortcut")}
                     className={
                         "rounded-[4px] border border-black/15 px-3 py-1.5 text-[12px] font-regular text-black hover:border-black"
                     }
