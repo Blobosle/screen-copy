@@ -1,7 +1,9 @@
 node_modules/
 .venv/
-dist/
 build/
+dist/
+!dist/latex-ocr-helper/
+!dist/latex-ocr-helper/**
 release/
 snaptext-dev.log
 *.log
