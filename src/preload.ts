@@ -10,10 +10,6 @@ const api = {
         const settings = await ipcRenderer.invoke("get-settings");
         return settings;
     },
-    getShortcut: async (): Promise<string | null> => {
-        const shortcut = await ipcRenderer.invoke("get-shortcut");
-        return shortcut;
-    },
     getHistory: async (): Promise<HistoryRecord> => {
         const history = await ipcRenderer.invoke("get-history");
         return history;

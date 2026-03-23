@@ -365,14 +365,7 @@ ipcMain.handle("capture-text", async (): Promise<CaptureResult> => {
 });
 
 /*
- * TODO: Handle multiple shortcuts
- */
-ipcMain.handle("get-shortcut", async (): Promise<string | null> => {
-    return appSettings.screenshotShortcut;
-});
-
-/*
- * TODO: Handle multiple shortcuts
+ * IPC for retuning the current state of AppSettings
  */
 ipcMain.handle("get-settings", async (): Promise<AppSettings> => {
     return appSettings;
@@ -386,7 +379,7 @@ ipcMain.handle("get-history", async (): Promise<HistoryRecord> => {
 });
 
 /*
- * TODO: Handle specific shortcut sets
+ * IPC for handling shortcut changes
  */
 ipcMain.handle("set-shortcut", async (_event, shortcutType: string, shortcut: string): Promise<boolean> => {
     /* fuck knows why this is important to call */

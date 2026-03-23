@@ -4,7 +4,6 @@ declare global {
     interface Window {
         screenCopy: {
             captureText: () => Promise<CaptureResult>;
-            getShortcut: () => Promise<string | null>;
             getSettings: () => Promise<AppSettings>;
             getHistory: () => Promise<HistoryRecord>;
             setShortcut: (shortcutType: string, shortcut: string) => Promise<boolean>;
