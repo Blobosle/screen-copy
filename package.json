@@ -12,7 +12,7 @@
         "build:style:watch": "npx @tailwindcss/cli -i src/renderer/style.css -o dist/renderer/style.css --watch",
         "build:renderer": "node ./scripts/build-renderer.mjs",
         "build:swift": "node ./scripts/build-swift-helper.mjs",
-        "build:latex": "pyinstaller --clean --noconfirm --onedir --name latex-ocr-helper --add-data \".venv/lib/python3.11/site-packages/rapid_latex_ocr/config.yaml:rapid_latex_ocr\" --add-data \".venv/lib/python3.11/site-packages/rapid_latex_ocr/models:rapid_latex_ocr/models\" native/latex_ocr.py",
+        "build:latex": "source .venv/bin/activate && pyinstaller --clean --noconfirm --onedir --name latex-ocr-helper --add-data \".venv/lib/python3.11/site-packages/rapid_latex_ocr/config.yaml:rapid_latex_ocr\" --add-data \".venv/lib/python3.11/site-packages/rapid_latex_ocr/models:rapid_latex_ocr/models\" native/latex_ocr.py",
         "build": "npm run clean && npm run build:ts && npm run build:swift && npm run build:style && npm run build:renderer",
         "dev": "npm run build && electron . 2>&1",
         "watch": "npm run dev && npm run build:style:watch",

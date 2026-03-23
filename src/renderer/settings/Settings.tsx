@@ -1,6 +1,6 @@
 import { useState, ReactNode } from "react";
 import { formatAcceleratorForDisplay } from "@renderer/lib/accelerators";
-import { StatusState } from "@shared/types"
+import { AppSettings, StatusState } from "@shared/types"
 import { useLoad } from "@renderer/settings/hooks/useLoad";
 import { useListener } from "@renderer/settings/hooks/useListener";
 import { Sidebar } from "@renderer/settings/components/sidebar/Sidebar";
@@ -44,7 +44,7 @@ export function Settings() {
 
                 setShortcut((prev) => ({
                     ...prev,
-                    ["screenshotShortcut"]: formatAcceleratorForDisplay(result.screenshotShortcut),
+                    [shortcutType]: formatAcceleratorForDisplay(result[shortcutType as keyof AppSettings]),
                 }));
             } catch (error) {
                 setStatus({

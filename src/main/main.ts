@@ -78,8 +78,10 @@ async function loadSettings(): Promise<AppSettings> {
                 settings[i] = settings[i].trim();
             }
 
+            console.log("LOG settings: ", i, settings[i]);
+
             if (settings[i].length > 0 && !globalShortcut.register(settings[i], shortcutRouter(settings[i]))) {
-                console.log("EXCEPTION: [main.ts:loadSettings()] Shortcut could not be registered");
+                console.log("EXCEPTION: [main.ts:loadSettings()] Shortcut could not be registered", i, settings[i]);
             }
         }
 
@@ -372,10 +374,7 @@ ipcMain.handle("get-shortcut", async (): Promise<string | null> => {
  * TODO: Handle multiple shortcuts
  */
 ipcMain.handle("get-settings", async (): Promise<AppSettings> => {
-    return {
-        ...appSettings,
-        screenshotShortcut: appSettings.screenshotShortcut
-    };
+    return appSettings;
 });
 
 /*
@@ -408,7 +407,8 @@ ipcMain.handle("clear-history", async (): Promise<HistoryRecord> => {
  * Given a shortcut it resets to default
  */
 ipcMain.handle("reset-shortcut", async (_event, shortcutType: string): Promise<AppSettings> => {
-    appSettings[shortcutType as keyof AppSettings] = DEFAULT_SETTINGS[shortcutType as keyof AppSettings];
+    applyShortcut(shortcutType as keyof AppSettings, DEFAULT_SETTINGS[shortcutType as keyof AppSettings]);
+
     await writeSettings();
     await loadSettings();
 
