@@ -3,7 +3,7 @@ import { StatusState } from "../../../shared/types";
 import { formatAcceleratorForDisplay } from "../../lib/accelerators";
 
 export function useLoad(
-    setShortcut: Dispatch<SetStateAction<string>>,
+    setShortcut: Dispatch<SetStateAction<Record<string, string>>>,
     setStatus: Dispatch<SetStateAction<StatusState>>,
     setIsLoading: Dispatch<SetStateAction<boolean>>): void {
 
@@ -15,7 +15,11 @@ export function useLoad(
                 const settings = await window.screenCopy.getSettings();
 
                 if (!cancelled) {
-                    setShortcut(formatAcceleratorForDisplay(settings.screenshotShortcut));
+                    setShortcut({
+                        screenshotShortcut: formatAcceleratorForDisplay(settings.screenshotShortcut),
+                        latexShortcut: formatAcceleratorForDisplay(settings.latexShortcut)
+                    });
+
                     setStatus({
                         kind: "idle",
                         message: "Click the shortcut field to change it."

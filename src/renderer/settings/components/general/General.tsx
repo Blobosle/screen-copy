@@ -6,14 +6,16 @@ export function General({
     isListening,
     status,
     onStartListening,
-    onReset
+    onReset,
+    skey,
 }: {
-    shortcut: string;
+    shortcut: Record<string, string>;
     isLoading: boolean;
     isListening: boolean;
     status: StatusState;
-    onStartListening: () => void;
+    onStartListening: (arg: string) => void;
     onReset: () => void;
+    skey: string,
 }) {
     return (
         <section className="col-span-3 bg-white px-8 py-7">
@@ -28,16 +30,16 @@ export function General({
 
             <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-black/10 py-4">
                 <p className="pr-4 text-[14px] font-regular text-black">
-                    Screenshot shortcut
+                    Copy shortcut
                 </p>
 
                 <button
-                    onClick={onStartListening}
+                    onClick={() => onStartListening("screenshotShortcut")}
                     className={
                         "rounded-[4px] border border-black/15 px-3 py-1.5 text-[12px] font-regular text-black hover:border-black"
                     }
                 >
-                    {isLoading ? "" : isListening ? "Type a shortcut" : shortcut}
+                    {isLoading ? "" : isListening && skey === "screenshotShortcut" ? "Type a shortcut" : shortcut.screenshotShortcut}
                 </button>
 
                 <button
@@ -49,6 +51,31 @@ export function General({
                     Reset to Default
                 </button>
             </div>
+
+            <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-black/10 py-4">
+                <p className="pr-4 text-[14px] font-regular text-black">
+                    Latex shortcut
+                </p>
+
+                <button
+                    onClick={() => onStartListening("latexShortcut")}
+                    className={
+                        "rounded-[4px] border border-black/15 px-3 py-1.5 text-[12px] font-regular text-black hover:border-black"
+                    }
+                >
+                    {isLoading ? "" : isListening && skey === "latexShortcut" ? "Type a shortcut" : shortcut.latexShortcut}
+                </button>
+
+                <button
+                    onClick={onReset}
+                    className={
+                        "rounded-[4px] border border-black/15 px-3 py-1.5 text-[12px] font-regular text-black hover:border-black"
+                    }
+                >
+                    Reset to Default
+                </button>
+            </div>
+
 
             <p
                 className={[

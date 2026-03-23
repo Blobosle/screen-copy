@@ -85,11 +85,10 @@ export async function runLatexFlow(): Promise<CaptureResult> {
     return result;
 }
 
-
 /*
  * Callback to handle screenshot latex shortcut command
  */
-function handleLatexTriggered(): void {
+export function handleLatexTriggered(): void {
     void runLatexFlow().then(async (result) => {
         if (result.status === "error" && (!mainWindow || !mainWindow.isFocused())) {
             console.log("ERROR: [main.ts:handleLatexTriggered] Result status returned an error");

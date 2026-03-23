@@ -5,7 +5,7 @@ export type CaptureResult =
 
 export interface AppSettings {
     screenshotShortcut: string;
-    imageShortcut: string;
+    latexShortcut: string;
 };
 
 export type StatusState =

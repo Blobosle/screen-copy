@@ -15,12 +15,14 @@ import {
 import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from "./screenshot.js";
 import { recognizeTextFromImage } from "./ocr.js";
 import { addHistoryEntry, clearHistory, getHistory, initHistory } from "./history.js";
+import { handleLatexTriggered } from "./latex.js";
 import type { AppSettings, CaptureResult, HistoryRecord } from "../shared/types.js";
 
-const DEFAULT_SHORTCUT = "CommandOrControl+Shift+Y";
+const DEFAULT_COPY_SHORTCUT = "CommandOrControl+Shift+Y";
+const DEFAULT_LATEX_SHORTCUT = "CommandOrControl+Shift+L";
 const DEFAULT_SETTINGS: AppSettings = {
-    screenshotShortcut: DEFAULT_SHORTCUT,
-    imageShortcut: "",
+    screenshotShortcut: DEFAULT_COPY_SHORTCUT,
+    latexShortcut: DEFAULT_LATEX_SHORTCUT,
 };
 
 const IS_DEV = !app.isPackaged;
@@ -37,6 +39,20 @@ let appSettings: AppSettings = { ...DEFAULT_SETTINGS };
 
 if (process.platform === "darwin") {
     app.setActivationPolicy("accessory");
+}
+
+function shortcutRouter(shortcut: string): () => void {
+    if (shortcut === appSettings.screenshotShortcut) {
+        return handleShortcutTriggered;
+    }
+
+    if (shortcut === appSettings.latexShortcut) {
+        return handleLatexTriggered;
+    }
+
+    return () => {
+        console.log("ERROR: [main.ts:shortcutRouter()] Router did not find shortcut", shortcut);
+    };
 }
 
 /*
@@ -56,7 +72,7 @@ async function loadSettings(): Promise<AppSettings> {
                 settings[i] = settings[i].trim();
             }
 
-            if (settings[i].length > 0 && !globalShortcut.register(settings[i], handleShortcutTriggered)) {
+            if (settings[i].length > 0 && !globalShortcut.register(settings[i], shortcutRouter(settings[i]))) {
                 console.log("EXCEPTION: [main.ts:loadSettings()] Shortcut could not be registered");
             }
         }
@@ -274,8 +290,8 @@ function applyShortcut(shortcutKey: keyof AppSettings, shortcut: string): boolea
 
     globalShortcut.unregister(oldShortcut);
 
-    if (!globalShortcut.register(newShortcut, handleShortcutTriggered)) {
-        console.log("ERROR: [main.ts:applyShortcut()] Shortcut could not be registered");
+    if (!globalShortcut.register(newShortcut, shortcutRouter(shortcutKey))) {
+        console.log("ERROR: [main.ts:applyShortcut()] Shortcut could not be registered", newShortcut);
         return false;
     }
 
@@ -366,10 +382,10 @@ ipcMain.handle("get-history", async (): Promise<HistoryRecord> => {
 /*
  * TODO: Handle specific shortcut sets
  */
-ipcMain.handle("set-shortcut", async (_event, shortcut: string): Promise<boolean> => {
+ipcMain.handle("set-shortcut", async (_event, shortcutType: string, shortcut: string): Promise<boolean> => {
     /* fuck knows why this is important to call */
     // appSettings = await loadSettings();
-    const ret = applyShortcut("screenshotShortcut", shortcut);
+    const ret = applyShortcut(shortcutType as keyof AppSettings, shortcut);
 
     return ret;
 });

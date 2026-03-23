@@ -6,7 +6,8 @@ export function useListener(
     isListening: boolean,
     setIsListening: Dispatch<SetStateAction<boolean>>,
     setStatus: Dispatch<SetStateAction<StatusState>>,
-    setShortcut: Dispatch<SetStateAction<string>>
+    setShortcut: Dispatch<SetStateAction<Record<string, string>>>,
+    shortcutKey: string,
 ): void {
     useEffect(() => {
         if (!isListening) {
@@ -40,9 +41,12 @@ export function useListener(
 
             void (async () => {
                 try {
-                    const result = await window.screenCopy.setShortcut(accelerator);
+                    const result = await window.screenCopy.setShortcut(shortcutKey, accelerator);
 
-                    setShortcut(formatAcceleratorForDisplay(accelerator.trim()));
+                    setShortcut((prev) => ({
+                        ...prev,
+                        [shortcutKey]: formatAcceleratorForDisplay(accelerator.trim()),
+                    }));
 
                     if (result === true) {
                         setStatus({

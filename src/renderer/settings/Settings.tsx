@@ -10,7 +10,10 @@ import { History } from "@renderer/settings/components/history/History";
 type settingTab = "general" | "history";
 
 export function Settings() {
-    const [shortcut, setShortcut] = useState<string>("⌘⇧Y");
+    const [shortcut, setShortcut] = useState<Record<string, string>>({
+        "screenshotShortcut": "⌘⇧Y",
+        "latexShortcut": "⌘⇧L"
+    });
     const [isLoading, setIsLoading] = useState(true);
     const [isListening, setIsListening] = useState(false);
     const [isTab, setTab] = useState<settingTab>("general");
@@ -18,11 +21,13 @@ export function Settings() {
         kind: "idle",
         message: "Click the shortcut field to change it."
     });
+    const [skey, setSkey] = useState<string>("");
 
     useLoad(setShortcut, setStatus, setIsLoading);
-    useListener(isListening, setIsListening, setStatus, setShortcut);
+    useListener(isListening, setIsListening, setStatus, setShortcut, skey);
 
-    const onStartListening = (): void => {
+    const onStartListening = (shortcutType: string): void => {
+        setSkey(shortcutType);
         setIsListening(true);
         setStatus({
             kind: "idle",
@@ -39,7 +44,11 @@ export function Settings() {
         void (async () => {
             try {
                 const result = await window.screenCopy.resetShortcut();
-                setShortcut(formatAcceleratorForDisplay(result.screenshotShortcut));
+
+                setShortcut((prev) => ({
+                    ...prev,
+                    ["screenshotShortcut"]: formatAcceleratorForDisplay(result.screenshotShortcut),
+                }));
             } catch (error) {
                 setStatus({
                     kind: "error",
@@ -66,6 +75,7 @@ export function Settings() {
                     status={status}
                     onStartListening={onStartListening}
                     onReset={onReset}
+                    skey={skey}
                 />;
             case "history":
                 return <History />
@@ -78,6 +88,7 @@ export function Settings() {
                     status={status}
                     onStartListening={onStartListening}
                     onReset={onReset}
+                    skey={skey}
                 />;
         }
     }
