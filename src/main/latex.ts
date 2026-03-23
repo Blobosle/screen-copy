@@ -4,7 +4,7 @@ import {
     systemPreferences,
     globalShortcut,
 } from "electron";
-import { addHistoryEntry } from "./history";
+import { addHistoryEntry, emitUpdatedHistory, getHistory } from "./history";
 import { abortRecognizeLatex, isAborted, recognizeLatexfromImage, setAbortFalse } from "./ocr";
 import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from "./screenshot.js";
 import { mainWindow } from "./main";
@@ -62,6 +62,10 @@ export async function runLatexFlow(): Promise<CaptureResult> {
 
             clipboard.writeText(text);
             await addHistoryEntry(text)
+
+            const history = await getHistory();
+            emitUpdatedHistory(history);
+
 
             return {
                 status: "success",

@@ -1,7 +1,9 @@
 import fs from "node:fs/promises";
+import constants from "node:constants";
 import path from "node:path";
 import { app } from "electron";
 import { HistoryRecord } from "@shared/types";
+import { mainWindow } from "./main";
 
 const HISTORY_PATH = path.join(app.getPath("userData"), "history.json");
 
@@ -65,6 +67,13 @@ export async function getHistory(): Promise<HistoryRecord> {
  */
 export async function initHistory(): Promise<void> {
     await fs.mkdir(path.dirname(HISTORY_PATH), { recursive: true });
+
+    try {
+        await fs.access(HISTORY_PATH, constants.F_OK);
+        await loadHistory();
+    } catch {
+        await writeHistory();
+    }
 }
 
 /*
@@ -73,4 +82,13 @@ export async function initHistory(): Promise<void> {
 export async function clearHistory(): Promise<void> {
     appHistory = { history: [] };
     await writeHistory();
+}
+
+/*
+ * IPC for updating history entries real time
+ */
+export function emitUpdatedHistory(history: HistoryRecord): void {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("history-updated", history);
+    }
 }

@@ -30,6 +30,17 @@ const api = {
         const result = await ipcRenderer.invoke("clear-history");
         return result;
     },
+    onHistoryUpdated: (listener: (history: HistoryRecord) => void): (() => void) => {
+        const wrapped = (_event: Electron.IpcRendererEvent, history: HistoryRecord) => {
+            listener(history);
+        };
+
+        ipcRenderer.on("history-updated", wrapped);
+
+        return () => {
+            ipcRenderer.removeListener("history-updated", wrapped);
+        };
+    },
     onCaptureResult: (listener: (result: CaptureResult) => void): void => {
         ipcRenderer.on("capture-result", (_event, result: CaptureResult) => {
             listener(result);

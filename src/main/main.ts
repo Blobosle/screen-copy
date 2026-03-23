@@ -14,7 +14,7 @@ import {
 } from "electron";
 import { captureInteractiveScreenshot, deleteIfExists, ScreenshotCancelledError } from "./screenshot.js";
 import { recognizeTextFromImage } from "./ocr.js";
-import { addHistoryEntry, clearHistory, getHistory, initHistory } from "./history.js";
+import { addHistoryEntry, clearHistory, emitUpdatedHistory, getHistory, initHistory } from "./history.js";
 import { handleLatexTriggered } from "./latex.js";
 import type { AppSettings, CaptureResult, HistoryRecord } from "../shared/types.js";
 
@@ -229,6 +229,9 @@ async function runCaptureFlow(): Promise<CaptureResult> {
 
             clipboard.writeText(text);
             await addHistoryEntry(text)
+
+            const history = await getHistory();
+            emitUpdatedHistory(history);
 
             return {
                 status: "success",

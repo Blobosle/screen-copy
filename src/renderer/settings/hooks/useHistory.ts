@@ -7,6 +7,7 @@ export function useHistory(
 ): void {
     useEffect(() => {
         let cancelled = false;
+        let unsubscribe: (() => void) | undefined;
 
         void (async () => {
             const ret = await window.screenCopy.getHistory();
@@ -14,10 +15,15 @@ export function useHistory(
             if (!cancelled) {
                 setEntry(ret.history);
             }
+
+            unsubscribe = window.screenCopy.onHistoryUpdated((history) => {
+                setEntry(history.history);
+            });
         })();
 
         return () => {
             cancelled = true;
+            unsubscribe?.();
         }
     }, []);
 
