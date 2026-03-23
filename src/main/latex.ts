@@ -37,9 +37,9 @@ export async function runLatexFlow(): Promise<CaptureResult> {
         let screenshotPath: string | null = null;
 
         try {
-            if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
-                mainWindow.hide();
-            }
+            // if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
+            //     mainWindow.hide();
+            // }
 
             /* Screenshot + OCR */
             screenshotPath = await captureInteractiveScreenshot();
