@@ -91,13 +91,7 @@ export async function runLatexFlow(): Promise<CaptureResult> {
 export function handleLatexTriggered(): void {
     void runLatexFlow().then(async (result) => {
         if (result.status === "error" && (!mainWindow || !mainWindow.isFocused())) {
-            console.log("ERROR: [main.ts:handleLatexTriggered] Result status returned an error");
-
-            await dialog.showMessageBox({
-                type: "error",
-                title: "ScreenCopy",
-                message: result.message
-            });
+            console.log("ERROR: [main.ts:handleLatexTriggered] Result status returned an error", result.message);
         }
     });
 }

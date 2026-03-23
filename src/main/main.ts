@@ -42,11 +42,11 @@ if (process.platform === "darwin") {
 }
 
 function shortcutRouter(shortcut: string): () => void {
-    if (shortcut === appSettings.screenshotShortcut) {
+    if (shortcut === "screenshotShortcut") {
         return handleShortcutTriggered;
     }
 
-    if (shortcut === appSettings.latexShortcut) {
+    if (shortcut === "latexShortcut") {
         return handleLatexTriggered;
     }
 
