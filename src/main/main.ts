@@ -41,12 +41,18 @@ if (process.platform === "darwin") {
     app.setActivationPolicy("accessory");
 }
 
+/*
+ * Router for delivering the correct callback function given a shortcut type
+ * TODO: Reformat, this shit is bound to break
+ */
 function shortcutRouter(shortcut: string): () => void {
-    if (shortcut === "screenshotShortcut") {
+    if (shortcut === "screenshotShortcut" ||
+        shortcut === appSettings.screenshotShortcut as string) {
         return handleShortcutTriggered;
     }
 
-    if (shortcut === "latexShortcut") {
+    if (shortcut === "latexShortcut" ||
+        shortcut === appSettings.latexShortcut) {
         return handleLatexTriggered;
     }
 
