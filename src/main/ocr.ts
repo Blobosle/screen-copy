@@ -23,3 +23,19 @@ export async function recognizeTextFromImage(filePath: string): Promise<string> 
 
     return stdout.trim();
 }
+
+/*
+ * Finds the path to the model and gets the output
+ */
+export async function recognizeLatexfromImage(filePath: string): Promise<string> {
+    const modelPath = path.join(process.cwd(), "dist/latex-ocr-helper/latex-ocr-helper");
+
+    const { stdout } = await execFileAsync(modelPath, [filePath]);
+
+    /* The issue is that a version diff warning messes up copy command */
+    // if (stderr.trim()) {
+    //     throw new Error(stderr.trim());
+    // }
+
+    return stdout.trim();
+}
