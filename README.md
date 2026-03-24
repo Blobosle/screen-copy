@@ -4,6 +4,8 @@
 
 <div align = center>
 
+[![GitHub stars](https://img.shields.io/github/stars/Blobosle/screen-copy?style=social)](https://github.com/Blobosle/screen-copy/stargazers)
+
 <a href="https://github.com/Blobosle/screen-copy/releases/latest">
     <img src="https://img.shields.io/badge/download-latest-brightgreen.svg" alt="download">
 </a>
