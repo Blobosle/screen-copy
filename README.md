@@ -35,6 +35,8 @@ If you encounter this, run the following command after dragging the application 
 xattr -d com.apple.quarantine /Applications/ScreenCopy.app
 ```
 
+or enable the app from the System Settings Privacy menu.
+
 ## Screen Recording Permissions
 
 The first time you use screen capture, macOS may ask for Screen Recording access. If access is denied, enable it in,
